@@ -1,8 +1,8 @@
 import mongoose from "mongoose";
+import { mongodbURL } from "../utils/constants";
 
 const database = async () => {
   try {
-    const mongodbURL = process.env.MONGODB_URL;
     if (!mongodbURL) throw new Error("MongoDB connection is not defined");
 
     const connect = await mongoose.connect(mongodbURL);
