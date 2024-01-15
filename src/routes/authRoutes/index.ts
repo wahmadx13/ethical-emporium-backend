@@ -11,6 +11,8 @@ import {
   updateUserPassword,
   updateUser,
   resetUserPassword,
+  blockAUser,
+  unblockAUser,
 } from "../../services/userServices";
 import { authMiddleware } from "../../middleware/authMiddleware";
 import { isAdmin } from "../../middleware/isAdmin";
@@ -22,13 +24,16 @@ const router = express.Router();
 router.post("/register", createUser);
 router.post("/login", loginUser);
 router.post("/forgot-password", forgotUserPasswordToken);
-router.put("/forgot-password/:token", resetUserPassword);
 router.get("/logout", logoutUser);
 router.get("/refresh", handleRefreshToken);
 router.get("/users", getAllUsers);
 router.get("/users/:id", getAUser);
 router.put("/update-user", authMiddleware, updateUser);
 router.put("/update-password", authMiddleware, updateUserPassword);
+router.put("/forgot-password/:token", resetUserPassword);
+router.put("/forgot-password/:token", resetUserPassword);
+router.put("/block-user/:id", authMiddleware, isAdmin, blockAUser);
+router.put("/unblock-user/:id", authMiddleware, isAdmin, unblockAUser);
 router.delete("/delete/:id", authMiddleware, deleteAUser);
 
 export default router;

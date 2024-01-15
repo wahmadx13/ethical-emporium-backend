@@ -38,7 +38,7 @@ const loginUser = expressAsyncHandler(
 
     const passwordMatched = await findUser?.isPasswordMatched(password);
 
-    if (findUser && passwordMatched) {
+    if (findUser && passwordMatched && !findUser.isBlocked) {
       const refreshToken = generateRefreshToken(findUser?._id.toString());
       await UserModel.findByIdAndUpdate(
         findUser?.id,
@@ -170,7 +170,7 @@ const updateUser = expressAsyncHandler(
 //Get All Users
 const getAllUsers = expressAsyncHandler(
   async (request: Request, response: Response): Promise<void> => {
-    const getAllUsers = await UserModel.find();
+    const getAllUsers: DocumentType<User>[] = await UserModel.find();
     response.json(getAllUsers);
   }
 );
@@ -179,7 +179,7 @@ const getAllUsers = expressAsyncHandler(
 const getAUser = expressAsyncHandler(
   async (request: Request, response: Response): Promise<void> => {
     const { id } = request.params;
-    const getAUser = await UserModel.findById(id);
+    const getAUser: DocumentType<User> | null = await UserModel.findById(id);
     response.json(getAUser);
   }
 );
@@ -256,6 +256,32 @@ const resetUserPassword = expressAsyncHandler(
   }
 );
 
+//Block User
+const blockAUser = expressAsyncHandler(
+  async (request: Request, response: Response): Promise<void> => {
+    const { id } = request.params;
+    validateMongoDBId(id);
+    const blockUser: DocumentType<User> | null =
+      await UserModel.findByIdAndUpdate(id, { isBlocked: true }, { new: true });
+    response.json({ message: "User Blocked", blockUser });
+  }
+);
+
+//Unblock A User
+const unblockAUser = expressAsyncHandler(
+  async (request: Request, response: Response): Promise<void> => {
+    const { id } = request.params;
+    validateMongoDBId(id);
+    const unblockUser: DocumentType<User> | null =
+      await UserModel.findByIdAndUpdate(
+        id,
+        { isBlocked: false },
+        { new: true }
+      );
+    response.json({ message: "User unblocked", unblockUser });
+  }
+);
+
 export {
   createUser,
   loginUser,
@@ -268,4 +294,6 @@ export {
   updateUserPassword,
   forgotUserPasswordToken,
   resetUserPassword,
+  blockAUser,
+  unblockAUser,
 };
