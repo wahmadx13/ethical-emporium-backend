@@ -13,7 +13,7 @@ import { sendEmail, validateMongoDBId } from "../../utils/helper";
 //Creating User
 const createUser = expressAsyncHandler(
   async (request: Request, response: Response): Promise<void> => {
-    const email: string = request.body.email;
+    const { email } = request.body;
 
     const findUser: DocumentType<User> | null = await UserModel.findOne({
       email,
@@ -65,7 +65,7 @@ const loginUser = expressAsyncHandler(
 
 //Refresh Token
 const handleRefreshToken = expressAsyncHandler(
-  async (request: Request, response: Response) => {
+  async (request: Request, response: Response): Promise<void> => {
     const cookie = request.cookies;
     const refreshToken = cookie.refreshToken;
     console.log("refreshToken", refreshToken);
