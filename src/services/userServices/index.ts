@@ -3,11 +3,12 @@ import { DocumentType } from "@typegoose/typegoose";
 import expressAsyncHandler from "express-async-handler";
 import jwt from "jsonwebtoken";
 import { VerifyErrors, JwtPayload } from "jsonwebtoken";
+import crypto from "crypto";
 import { UserModel, User } from "../../models/userModel";
 import { generateRefreshToken } from "../../config/refreshToken";
 import { generateToken } from "../../config/jwtToken";
 import { jwtSecret } from "../../utils/constants";
-import { validateMongoDBId } from "../../utils/helper";
+import { sendEmail, validateMongoDBId } from "../../utils/helper";
 
 //Creating User
 const createUser = expressAsyncHandler(
@@ -56,6 +57,8 @@ const loginUser = expressAsyncHandler(
         phone_number: findUser?.phoneNumber,
         token: generateToken(findUser?._id.toString()),
       });
+    } else {
+      throw new Error("Invalid email or password");
     }
   }
 );
@@ -164,4 +167,105 @@ const updateUser = expressAsyncHandler(
   }
 );
 
-export { createUser, loginUser, logoutUser, handleRefreshToken, updateUser };
+//Get All Users
+const getAllUsers = expressAsyncHandler(
+  async (request: Request, response: Response): Promise<void> => {
+    const getAllUsers = await UserModel.find();
+    response.json(getAllUsers);
+  }
+);
+
+//Get A User
+const getAUser = expressAsyncHandler(
+  async (request: Request, response: Response): Promise<void> => {
+    const { id } = request.params;
+    const getAUser = await UserModel.findById(id);
+    response.json(getAUser);
+  }
+);
+
+//Delete A User
+const deleteAUser = expressAsyncHandler(
+  async (request: Request, response: Response): Promise<void> => {
+    const { id } = request.params;
+    validateMongoDBId(id);
+    const deleteAUser = await UserModel.findByIdAndDelete(id);
+    response.json(deleteAUser);
+  }
+);
+
+//Update User Password
+const updateUserPassword = expressAsyncHandler(
+  async (request: Request, response: Response): Promise<void> => {
+    const { _id } = request.user;
+    const { password } = request.body;
+    validateMongoDBId(_id);
+    const user: DocumentType<User> | null = await UserModel.findById(_id);
+    if (user && password) {
+      user.password = password;
+      const updateUserPassword = await user.save();
+      response.json(updateUserPassword);
+    } else {
+      response.json(user);
+    }
+  }
+);
+
+//Forgotten User Password
+const forgotUserPasswordToken = expressAsyncHandler(
+  async (request: Request, response: Response): Promise<void> => {
+    const { email } = request.body;
+    const user: DocumentType<User> | null = await UserModel.findOne({ email });
+    if (!user) {
+      throw new Error("The email is not associated with any user");
+    } else {
+      const token = await user.createPasswordResetToken();
+      await user.save();
+      const resetURL = `Hi! Please follow this link to reset Your Password. This link is valid for 10 minutes from now. <a href='http://localhost:5000/api/user/forgot-password/${token}'>Click Here</a>`;
+      const data = {
+        to: email,
+        text: "Hey Dear User",
+        subject: "Forgot Password Link",
+        htm: resetURL,
+      };
+      sendEmail(data);
+      response.json(token);
+    }
+  }
+);
+
+//Reset User Password
+const resetUserPassword = expressAsyncHandler(
+  async (request: Request, response: Response): Promise<void> => {
+    const { token } = request.params;
+    const { password } = request.body;
+    const hashedToken = crypto.createHash("sha256").update(token).digest("hex");
+    const user: DocumentType<User> | null = await UserModel.findOne({
+      passwordResetToken: hashedToken,
+      passwordResetExpires: { $gt: Date.now() + 10 * 60 * 1000 },
+    });
+    if (!user) {
+      throw new Error("Token expired. Please try again");
+    } else {
+      user.password = password;
+      user.passwordResetToken = undefined;
+      user.passwordResetExpires = undefined;
+      await user.save();
+      response.json(user);
+    }
+  }
+);
+
+export {
+  createUser,
+  loginUser,
+  logoutUser,
+  handleRefreshToken,
+  updateUser,
+  getAllUsers,
+  getAUser,
+  deleteAUser,
+  updateUserPassword,
+  forgotUserPasswordToken,
+  resetUserPassword,
+};
