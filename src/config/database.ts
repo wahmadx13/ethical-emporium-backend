@@ -1,11 +1,8 @@
 import mongoose from "mongoose";
-import { mongodbURL } from "../utils/constants";
 
 const database = async () => {
   try {
-    if (!mongodbURL) throw new Error("MongoDB connection is not defined");
-
-    const connect = await mongoose.connect(mongodbURL);
+    const connect = await mongoose.connect(process.env.MONGODB_URI!);
     console.log("Database connected successfully");
     mongoose.connection.on("connect", () => {
       console.log("MongoDB connected successfully");

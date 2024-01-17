@@ -1,16 +1,10 @@
-import { pre, prop, getModelForClass, Ref } from "@typegoose/typegoose";
+import { prop, getModelForClass, Ref } from "@typegoose/typegoose";
 import { Types } from "mongoose";
-import bcrypt from "bcrypt";
 import crypto from "crypto";
-
-@pre<User>("save", async function (next) {
-  if (!this.isModified("password")) {
-    return next();
-  }
-  const salt = await bcrypt.genSaltSync(10);
-  this.password = await bcrypt.hash(this.password, salt);
-})
 class User {
+  @prop({ required: true, type: Types.ObjectId })
+  _id!: Types.ObjectId;
+
   @prop({ required: true, index: true })
   name!: string;
 
@@ -19,9 +13,6 @@ class User {
 
   @prop({ required: true, unique: true })
   phoneNumber!: string;
-
-  @prop({ required: true })
-  password!: string;
 
   @prop({ default: "user" })
   role?: string;
@@ -52,10 +43,6 @@ class User {
 
   @prop({ timestamps: true })
   updatedAt?: Date;
-
-  async isPasswordMatched(enteredPassword: string): Promise<boolean> {
-    return await bcrypt.compare(enteredPassword, this.password);
-  }
 
   async createPasswordResetToken(): Promise<string> {
     const resetToken = crypto.randomBytes(32).toString("hex");

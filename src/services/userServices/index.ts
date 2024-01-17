@@ -1,4 +1,5 @@
 import { Request, Response } from "express";
+import { v4 as uuidv4 } from "uuid";
 import { DocumentType } from "@typegoose/typegoose";
 import expressAsyncHandler from "express-async-handler";
 import jwt from "jsonwebtoken";
@@ -7,23 +8,25 @@ import crypto from "crypto";
 import { UserModel, User } from "../../models/userModel";
 import { generateRefreshToken } from "../../config/refreshToken";
 import { generateToken } from "../../config/jwtToken";
-import { jwtSecret } from "../../utils/constants";
 import { sendEmail, validateMongoDBId } from "../../utils/helper";
+import { cognitoSignup } from "../../aws/cognito/authServices";
 
 //Creating User
 const createUser = expressAsyncHandler(
   async (request: Request, response: Response): Promise<void> => {
-    const { email } = request.body;
+    const { email, name, phoneNumber, password } = request.body;
 
-    const findUser: DocumentType<User> | null = await UserModel.findOne({
-      email,
-    });
-
-    if (!findUser) {
-      const newUser: DocumentType<User> = await UserModel.create(request.body);
-      response.json(newUser);
-    } else {
-      throw new Error("User already exists");
+    try {
+      const createdUser = await cognitoSignup({
+        username: email,
+        name,
+        password,
+        email,
+        phone_number: phoneNumber,
+      });
+      response.json({ message: "User created", createdUser });
+    } catch (err) {
+      throw new Error(`The following error occurred: ${err}`);
     }
   }
 );
@@ -36,9 +39,9 @@ const loginUser = expressAsyncHandler(
       email,
     });
 
-    const passwordMatched = await findUser?.isPasswordMatched(password);
+    // const passwordMatched = await findUser?.isPasswordMatched(password);
 
-    if (findUser && passwordMatched && !findUser.isBlocked) {
+    if (findUser && !findUser.isBlocked) {
       const refreshToken = generateRefreshToken(findUser?._id.toString());
       await UserModel.findByIdAndUpdate(
         findUser?.id,
@@ -82,11 +85,7 @@ const handleRefreshToken = expressAsyncHandler(
       throw new Error("No refresh token present in db or not matched");
     }
 
-    if (!jwtSecret) {
-      throw new Error("Jwt secret is not defined");
-    }
-
-    jwt.verify(refreshToken, jwtSecret, function (
+    jwt.verify(refreshToken, process.env.JWT_SECRET!, function (
       err: VerifyErrors | null,
       decoded: JwtPayload | undefined
     ) {
@@ -202,7 +201,7 @@ const updateUserPassword = expressAsyncHandler(
     validateMongoDBId(_id);
     const user: DocumentType<User> | null = await UserModel.findById(_id);
     if (user && password) {
-      user.password = password;
+      // user.password = password;
       const updateUserPassword = await user.save();
       response.json(updateUserPassword);
     } else {
@@ -247,7 +246,7 @@ const resetUserPassword = expressAsyncHandler(
     if (!user) {
       throw new Error("Token expired. Please try again");
     } else {
-      user.password = password;
+      // user.password = password;
       user.passwordResetToken = undefined;
       user.passwordResetExpires = undefined;
       await user.save();
