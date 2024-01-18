@@ -1,4 +1,5 @@
 import { Request, Response } from "express";
+import { type ResourcesConfig } from "aws-amplify";
 import mongoose from "mongoose";
 import nodemailer from "nodemailer";
 import expressAsyncHandler from "express-async-handler";
@@ -34,4 +35,11 @@ export const sendEmail = async (data: EmailSenderDataProps): Promise<void> => {
     html: data.htm, // html body
   });
   console.log("info", info);
+};
+
+export const authConfig: ResourcesConfig["Auth"] = {
+  Cognito: {
+    userPoolId: process.env.CUSTOMER_USER_POOL_ID!,
+    userPoolClientId: process.env.CUSTOMER_USER_POOL_CLIENT_ID!,
+  },
 };
