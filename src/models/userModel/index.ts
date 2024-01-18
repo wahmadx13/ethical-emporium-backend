@@ -20,6 +20,9 @@ class User {
   @prop()
   address?: string;
 
+  @prop()
+  cognitoUserId?: string;
+
   @prop({ default: false })
   isBlocked?: boolean;
 

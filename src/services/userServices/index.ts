@@ -9,25 +9,50 @@ import { UserModel, User } from "../../models/userModel";
 import { generateRefreshToken } from "../../config/refreshToken";
 import { generateToken } from "../../config/jwtToken";
 import { sendEmail, validateMongoDBId } from "../../utils/helper";
-import { cognitoSignup } from "../../aws/cognito/authServices";
+import {
+  cognitoSignup,
+  cognitoVerifyUser,
+} from "../../aws/cognito/authServices";
 
 //Creating User
 const createUser = expressAsyncHandler(
   async (request: Request, response: Response): Promise<void> => {
     const { email, name, phoneNumber, password } = request.body;
+    const existingUser: DocumentType<User> | null = await UserModel.findOne({
+      email,
+    });
 
     try {
-      const createdUser = await cognitoSignup({
-        username: email,
-        name,
-        password,
-        email,
-        phone_number: phoneNumber,
-      });
-      response.json({ message: "User created", createdUser });
+      if (existingUser) {
+        response.json({ message: `User exists with current email: ${email}` });
+      } else {
+        await cognitoSignup({
+          username: email,
+          name,
+          password,
+          email,
+          phone_number: phoneNumber,
+        });
+        response.json({
+          message: `A six digit code is sent to: ${email}. Please verify email address`,
+        });
+      }
     } catch (err) {
       throw new Error(`The following error occurred: ${err}`);
     }
+  }
+);
+
+//Verifying User
+const verifyUser = expressAsyncHandler(
+  async (request: Request, response: Response) => {
+    const { email, code } = request.body;
+    await cognitoVerifyUser({
+      username: email,
+      confirmationCode: code,
+    });
+
+    response.json({ message: "User verified" });
   }
 );
 
@@ -283,6 +308,7 @@ const unblockAUser = expressAsyncHandler(
 
 export {
   createUser,
+  verifyUser,
   loginUser,
   logoutUser,
   handleRefreshToken,
