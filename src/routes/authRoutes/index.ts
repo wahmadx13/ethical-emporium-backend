@@ -14,6 +14,7 @@ import {
   resetUserPassword,
   blockAUser,
   unblockAUser,
+  logoutUserOfAllDevices,
 } from "../../services/userServices";
 import { authMiddleware } from "../../middleware/authMiddleware";
 import { isAdmin } from "../../middleware/isAdmin";
@@ -27,6 +28,7 @@ router.post("/verify", verifyUser);
 router.post("/login", loginUser);
 router.post("/forgot-password", forgotUserPasswordToken);
 router.get("/logout", logoutUser);
+router.get("/logout-globally", logoutUserOfAllDevices);
 router.get("/refresh", handleRefreshToken);
 router.get("/users", getAllUsers);
 router.get("/users/:id", getAUser);

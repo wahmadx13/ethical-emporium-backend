@@ -10,6 +10,9 @@ import { generateRefreshToken } from "../../config/refreshToken";
 import { generateToken } from "../../config/jwtToken";
 import { sendEmail, validateMongoDBId } from "../../utils/helper";
 import {
+  cognitoGlobalSignout,
+  cognitoSigninUser,
+  cognitoSignout,
   cognitoSignup,
   cognitoVerifyUser,
 } from "../../aws/cognito/authServices";
@@ -64,27 +67,12 @@ const loginUser = expressAsyncHandler(
       email,
     });
 
-    // const passwordMatched = await findUser?.isPasswordMatched(password);
-
     if (findUser && !findUser.isBlocked) {
-      const refreshToken = generateRefreshToken(findUser?._id.toString());
-      await UserModel.findByIdAndUpdate(
-        findUser?.id,
-        { refreshToken },
-        { new: true }
-      );
-
-      response.cookie("refreshToken", refreshToken, {
-        httpOnly: true,
-        maxAge: 72 * 60 * 60 * 1000,
+      const userSignedIn = await cognitoSigninUser({
+        username: email,
+        password,
       });
-
-      response.json({
-        name: findUser?.name,
-        email: findUser.email,
-        phone_number: findUser?.phoneNumber,
-        token: generateToken(findUser?._id.toString()),
-      });
+      response.json(userSignedIn);
     } else {
       throw new Error("Invalid email or password");
     }
@@ -127,38 +115,16 @@ const handleRefreshToken = expressAsyncHandler(
 //Logout User
 const logoutUser = expressAsyncHandler(
   async (request: Request, response: Response): Promise<void> => {
-    const cookie = request.cookies;
-    const refreshToken = cookie.refreshToken;
+    await cognitoSignout();
+    response.json({ message: "User signed out successfully" });
+  }
+);
 
-    if (!refreshToken) {
-      throw new Error("No refresh token in cookie");
-    }
-
-    const user: DocumentType<User> | null = await UserModel.findOne({
-      refreshToken,
-    });
-
-    if (!user) {
-      response.clearCookie("refreshToken", {
-        httpOnly: true,
-        secure: true,
-      });
-
-      response.status(401).json({
-        message: "User not found or already logged out.",
-      });
-    } else {
-      await UserModel.findOneAndUpdate({ refreshToken }, { refreshToken: "" });
-
-      response.clearCookie("refreshToken", {
-        httpOnly: true,
-        secure: true,
-      });
-
-      response.json({
-        message: "User logged out successfully!",
-      });
-    }
+//Signout of all devices
+const logoutUserOfAllDevices = expressAsyncHandler(
+  async (request: Request, response: Response): Promise<void> => {
+    await cognitoGlobalSignout();
+    response.json({ message: "User signed out of all devices successfully" });
   }
 );
 
@@ -311,6 +277,7 @@ export {
   verifyUser,
   loginUser,
   logoutUser,
+  logoutUserOfAllDevices,
   handleRefreshToken,
   updateUser,
   getAllUsers,
