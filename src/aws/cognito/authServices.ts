@@ -9,7 +9,7 @@ import {
 import { SignupParameters } from "../../types/custom";
 
 //Sign Up
-export const cognitoSignup = async (data: SignupParameters) => {
+export const cognitoSignup = async (data: SignupParameters): Promise<void> => {
   const { username, password, email, phone_number, name } = data;
   try {
     const { isSignUpComplete, userId, nextStep } = await signUp({
@@ -35,7 +35,7 @@ export const cognitoSignup = async (data: SignupParameters) => {
 export const cognitoVerifyUser = async ({
   username,
   confirmationCode,
-}: ConfirmSignUpInput) => {
+}: ConfirmSignUpInput): Promise<void> => {
   console.log("username", username);
   console.log("confirmationCode", confirmationCode);
   try {
@@ -54,7 +54,7 @@ export const cognitoVerifyUser = async ({
 export const cognitoSigninUser = async ({
   username,
   password,
-}: SignInInput) => {
+}: SignInInput): Promise<void> => {
   try {
     const { isSignedIn, nextStep } = await signIn({ username, password });
     console.log("isSignedIn", isSignedIn);
@@ -65,7 +65,7 @@ export const cognitoSigninUser = async ({
 };
 
 //Signout User
-export const cognitoSignout = async () => {
+export const cognitoSignout = async (): Promise<void> => {
   try {
     await signOut();
     console.log("Signed out of all devices");
@@ -75,7 +75,7 @@ export const cognitoSignout = async () => {
 };
 
 //Signout of all devices
-export const cognitoGlobalSignout = async () => {
+export const cognitoGlobalSignout = async (): Promise<void> => {
   try {
     await signOut({ global: true });
   } catch (err) {

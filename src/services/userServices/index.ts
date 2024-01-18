@@ -48,7 +48,7 @@ const createUser = expressAsyncHandler(
 
 //Verifying User
 const verifyUser = expressAsyncHandler(
-  async (request: Request, response: Response) => {
+  async (request: Request, response: Response): Promise<void> => {
     const { email, code } = request.body;
     await cognitoVerifyUser({
       username: email,

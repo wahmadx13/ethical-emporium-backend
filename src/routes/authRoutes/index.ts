@@ -16,7 +16,7 @@ import {
   unblockAUser,
   logoutUserOfAllDevices,
 } from "../../services/userServices";
-import { authMiddleware } from "../../middleware/authMiddleware";
+import { currentAuthenticatedUser } from "../../middleware/authMiddleware";
 import { isAdmin } from "../../middleware/isAdmin";
 
 //initialize router
@@ -33,11 +33,16 @@ router.get("/refresh", handleRefreshToken);
 router.get("/users", getAllUsers);
 router.get("/users/:id", getAUser);
 router.put("/update-user", updateUser);
-router.put("/update-password", authMiddleware, updateUserPassword);
+router.put("/update-password", currentAuthenticatedUser, updateUserPassword);
 router.put("/forgot-password/:token", resetUserPassword);
 router.put("/forgot-password/:token", resetUserPassword);
-router.put("/block-user/:id", authMiddleware, isAdmin, blockAUser);
-router.put("/unblock-user/:id", authMiddleware, isAdmin, unblockAUser);
-router.delete("/delete/:id", authMiddleware, deleteAUser);
+router.put("/block-user/:id", currentAuthenticatedUser, isAdmin, blockAUser);
+router.put(
+  "/unblock-user/:id",
+  currentAuthenticatedUser,
+  isAdmin,
+  unblockAUser
+);
+router.delete("/delete/:id", currentAuthenticatedUser, deleteAUser);
 
 export default router;
