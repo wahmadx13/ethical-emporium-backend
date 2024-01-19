@@ -29,36 +29,11 @@ class User {
   @prop({ type: () => [Types.ObjectId], default: [] })
   cart?: Types.ObjectId[];
 
-  @prop()
-  refreshToken?: string;
-
-  @prop()
-  passwordChangedAt?: Date;
-
-  @prop()
-  passwordResetToken?: string;
-
-  @prop()
-  passwordResetExpires?: Date;
-
   @prop({ timestamps: true })
   createdAt?: Date;
 
   @prop({ timestamps: true })
   updatedAt?: Date;
-
-  async createPasswordResetToken(): Promise<string> {
-    const resetToken = crypto.randomBytes(32).toString("hex");
-
-    const expirationTimestamp = Date.now() + 30 * 60 * 1000;
-
-    this.passwordResetToken = crypto
-      .createHash("sha256")
-      .update(resetToken)
-      .digest("hex");
-    this.passwordResetExpires = new Date(expirationTimestamp);
-    return resetToken;
-  }
 }
 
 const UserModel = getModelForClass(User);

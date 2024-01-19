@@ -1,20 +1,17 @@
 import { Request, Response } from "express";
-import { v4 as uuidv4 } from "uuid";
 import { DocumentType } from "@typegoose/typegoose";
 import expressAsyncHandler from "express-async-handler";
-import jwt from "jsonwebtoken";
-import { VerifyErrors, JwtPayload } from "jsonwebtoken";
-import crypto from "crypto";
 import { UserModel, User } from "../../models/userModel";
-import { generateRefreshToken } from "../../config/refreshToken";
-import { generateToken } from "../../config/jwtToken";
-import { sendEmail, validateMongoDBId } from "../../utils/helper";
+import { validateMongoDBId } from "../../utils/helper";
 import {
   cognitoGlobalSignout,
   cognitoSigninUser,
   cognitoSignout,
   cognitoSignup,
   cognitoVerifyUser,
+  handleConfirmResetPassword,
+  handlePasswordReset,
+  handleUpdatePassword,
 } from "../../aws/cognito/authServices";
 
 //Creating User
@@ -66,49 +63,19 @@ const loginUser = expressAsyncHandler(
     const findUser: DocumentType<User> | null = await UserModel.findOne({
       email,
     });
+    console.log("user", request.user);
 
-    if (findUser && !findUser.isBlocked) {
-      const userSignedIn = await cognitoSigninUser({
+    if (!request.user && !findUser?.isBlocked) {
+      await cognitoSigninUser({
         username: email,
         password,
       });
-      response.json(userSignedIn);
+      response.json({ message: "User sign in successfully" });
     } else {
-      throw new Error("Invalid email or password");
+      response.json({
+        message: `There is already an authenticated User: ${request.user}`,
+      });
     }
-  }
-);
-
-//Refresh Token
-const handleRefreshToken = expressAsyncHandler(
-  async (request: Request, response: Response): Promise<void> => {
-    const cookie = request.cookies;
-    const refreshToken = cookie.refreshToken;
-    console.log("refreshToken", refreshToken);
-
-    if (!refreshToken) {
-      throw new Error("No Refresh Token in cookies");
-    }
-
-    const user: DocumentType<User> | null = await UserModel.findOne({
-      refreshToken,
-    });
-
-    if (!user) {
-      throw new Error("No refresh token present in db or not matched");
-    }
-
-    jwt.verify(refreshToken, process.env.JWT_SECRET!, function (
-      err: VerifyErrors | null,
-      decoded: JwtPayload | undefined
-    ) {
-      if (err || !decoded || user.id !== decoded.id) {
-        throw new Error("There is something wrong with the refresh token");
-      }
-
-      const accessToken = generateToken(user?._id.toString());
-      response.json({ accessToken });
-    } as jwt.VerifyCallback);
   }
 );
 
@@ -140,8 +107,6 @@ const updateUser = expressAsyncHandler(
         _id,
         {
           name: request?.body?.name,
-          email: request?.body?.email,
-          phoneNumber: request?.body?.phoneNumber,
           address: request?.body?.address,
         },
         { new: true }
@@ -187,39 +152,25 @@ const deleteAUser = expressAsyncHandler(
 //Update User Password
 const updateUserPassword = expressAsyncHandler(
   async (request: Request, response: Response): Promise<void> => {
-    const { _id } = request.user;
-    const { password } = request.body;
-    validateMongoDBId(_id);
-    const user: DocumentType<User> | null = await UserModel.findById(_id);
-    if (user && password) {
-      // user.password = password;
-      const updateUserPassword = await user.save();
-      response.json(updateUserPassword);
-    } else {
-      response.json(user);
-    }
+    const { oldPassword, newPassword } = request.body;
+    await handleUpdatePassword({
+      oldPassword,
+      newPassword,
+    });
+    response.json({ message: "Password updated successfully" });
   }
 );
 
 //Forgotten User Password
-const forgotUserPasswordToken = expressAsyncHandler(
+const forgotUserPassword = expressAsyncHandler(
   async (request: Request, response: Response): Promise<void> => {
     const { email } = request.body;
     const user: DocumentType<User> | null = await UserModel.findOne({ email });
     if (!user) {
       throw new Error("The email is not associated with any user");
     } else {
-      const token = await user.createPasswordResetToken();
-      await user.save();
-      const resetURL = `Hi! Please follow this link to reset Your Password. This link is valid for 10 minutes from now. <a href='http://localhost:5000/api/user/forgot-password/${token}'>Click Here</a>`;
-      const data = {
-        to: email,
-        text: "Hey Dear User",
-        subject: "Forgot Password Link",
-        htm: resetURL,
-      };
-      sendEmail(data);
-      response.json(token);
+      const code = handlePasswordReset(email);
+      response.json(code);
     }
   }
 );
@@ -227,22 +178,13 @@ const forgotUserPasswordToken = expressAsyncHandler(
 //Reset User Password
 const resetUserPassword = expressAsyncHandler(
   async (request: Request, response: Response): Promise<void> => {
-    const { token } = request.params;
-    const { password } = request.body;
-    const hashedToken = crypto.createHash("sha256").update(token).digest("hex");
-    const user: DocumentType<User> | null = await UserModel.findOne({
-      passwordResetToken: hashedToken,
-      passwordResetExpires: { $gt: Date.now() + 10 * 60 * 1000 },
+    const { email, code, password } = request.body;
+    await handleConfirmResetPassword({
+      username: email,
+      confirmationCode: code,
+      newPassword: password,
     });
-    if (!user) {
-      throw new Error("Token expired. Please try again");
-    } else {
-      // user.password = password;
-      user.passwordResetToken = undefined;
-      user.passwordResetExpires = undefined;
-      await user.save();
-      response.json(user);
-    }
+    response.json({ message: "Password updated successfully" });
   }
 );
 
@@ -278,13 +220,12 @@ export {
   loginUser,
   logoutUser,
   logoutUserOfAllDevices,
-  handleRefreshToken,
   updateUser,
   getAllUsers,
   getAUser,
   deleteAUser,
   updateUserPassword,
-  forgotUserPasswordToken,
+  forgotUserPassword,
   resetUserPassword,
   blockAUser,
   unblockAUser,

@@ -5,6 +5,12 @@ import {
   signIn,
   type SignInInput,
   signOut,
+  resetPassword,
+  type ResetPasswordOutput,
+  confirmResetPassword,
+  type ConfirmResetPasswordInput,
+  updatePassword,
+  type UpdatePasswordInput,
 } from "aws-amplify/auth";
 import { SignupParameters } from "../../types/custom";
 
@@ -80,5 +86,57 @@ export const cognitoGlobalSignout = async (): Promise<void> => {
     await signOut({ global: true });
   } catch (err) {
     throw new Error(`An error occurred during the process: ${err}`);
+  }
+};
+
+//Reset Password
+export const handlePasswordReset = async (username: string): Promise<void> => {
+  try {
+    const output = await resetPassword({ username });
+    handleResetPasswordNextStep(output);
+  } catch (err) {
+    throw new Error(`An error occurred during the process: ${err}`);
+  }
+};
+
+export const handleResetPasswordNextStep = async (
+  output: ResetPasswordOutput
+): Promise<void> => {
+  const { nextStep } = output;
+  switch (nextStep.resetPasswordStep) {
+    case "CONFIRM_RESET_PASSWORD_WITH_CODE":
+      const codeDeliveryDetails = nextStep.codeDeliveryDetails;
+      console.log(
+        `Confirmation code was sent to ${codeDeliveryDetails.deliveryMedium}`
+      );
+      break;
+    case "DONE":
+      console.log("Password reset successfully");
+      break;
+  }
+};
+
+//Confirm Reset Password Code
+export const handleConfirmResetPassword = async ({
+  username,
+  confirmationCode,
+  newPassword,
+}: ConfirmResetPasswordInput): Promise<void> => {
+  try {
+    await confirmResetPassword({ username, confirmationCode, newPassword });
+  } catch (err) {
+    throw new Error(`Error during reset password: ${err}`);
+  }
+};
+
+//Update Password
+export const handleUpdatePassword = async ({
+  oldPassword,
+  newPassword,
+}: UpdatePasswordInput): Promise<void> => {
+  try {
+    await updatePassword({ oldPassword, newPassword });
+  } catch (err) {
+    throw new Error(`Error occurred: ${err}`);
   }
 };

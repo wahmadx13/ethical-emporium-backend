@@ -20,18 +20,24 @@ exports.handler = async (event, context, callback) => {
       const db = client.db(process.env.MONGODB_NAME);
       const userCollection = db.collection("users");
 
-      await userCollection.insertOne({
-        _id: new ObjectId(hashedId),
-        cognitoUserId: sub,
-        name,
-        email,
-        phoneNumber: phone_number,
-        role: "user",
-        cart: [],
-        isBlocked: false,
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      });
+      //Check for existing user
+      const existingUser = await userCollection.findOne({ cognitoUserId: sub });
+
+      //Insert one User if not exist
+      if (!existingUser) {
+        await userCollection.insertOne({
+          _id: new ObjectId(hashedId),
+          cognitoUserId: sub,
+          name,
+          email,
+          phoneNumber: phone_number,
+          role: "user",
+          cart: [],
+          isBlocked: false,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        });
+      }
 
       callback(null, event);
     } catch (err) {
@@ -43,7 +49,7 @@ exports.handler = async (event, context, callback) => {
           error: "Internal Server Error",
           message: err.message,
         }),
-      };
+      }
     } finally {
       //Closing the client
       await client.close();
