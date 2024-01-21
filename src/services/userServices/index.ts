@@ -1,5 +1,6 @@
 import { Request, Response } from "express";
 import { DocumentType } from "@typegoose/typegoose";
+import jwt, { VerifyErrors, JwtPayload } from "jsonwebtoken";
 import expressAsyncHandler from "express-async-handler";
 import { UserModel, User } from "../../models/userModel";
 import { validateMongoDBId } from "../../utils/helper";
@@ -13,6 +14,10 @@ import {
   handlePasswordReset,
   handleUpdatePassword,
 } from "../../aws/cognito/authServices";
+import { deleteUser, fetchAuthSession, getCurrentUser } from "aws-amplify/auth";
+import { currentAuthenticatedUser } from "../../middleware/authMiddleware";
+import { generateRefreshToken } from "../../config/refreshToken";
+import { generateToken } from "../../config/jwtToken";
 
 //Creating User
 const createUser = expressAsyncHandler(
@@ -63,18 +68,86 @@ const loginUser = expressAsyncHandler(
     const findUser: DocumentType<User> | null = await UserModel.findOne({
       email,
     });
-    console.log("user", request.user);
-
-    if (!request.user && !findUser?.isBlocked) {
+    if (!findUser?.isBlocked) {
       await cognitoSigninUser({
         username: email,
         password,
       });
-      response.json({ message: "User sign in successfully" });
-    } else {
-      response.json({
-        message: `There is already an authenticated User: ${request.user}`,
+      const { accessToken, idToken } = (await fetchAuthSession()).tokens ?? {};
+      // console.log("accessToken: ", accessToken, "idToken: ", idToken);
+      const refreshToken = generateToken(accessToken?.payload?.sub);
+      response.cookie("refreshToken", refreshToken, {
+        httpOnly: true,
+        maxAge: 72 * 60 * 60,
       });
+
+      response.json({
+        message: "Signed in successfully",
+        name: findUser?.name,
+        email: findUser?.email,
+        phoneNumber: findUser?.phoneNumber,
+        refreshToken,
+      });
+    } else {
+      throw new Error("Invalid Credentials or user blocked by admin");
+    }
+  }
+);
+const loginAdmin = expressAsyncHandler(
+  async (request: Request, response: Response): Promise<void> => {
+    const { email, password } = request.body;
+    const findUser: DocumentType<User> | null = await UserModel.findOne({
+      email,
+    });
+    if (findUser?.role?.toLowerCase() !== "admin") {
+      throw new Error("Not Authorized");
+    }
+    await cognitoSigninUser({
+      username: email,
+      password,
+    });
+    const { accessToken, idToken } = (await fetchAuthSession()).tokens ?? {};
+    // console.log("accessToken: ", accessToken, "idToken: ", idToken);
+    const refreshToken = generateToken(accessToken?.payload?.sub);
+    response.cookie("refreshToken", refreshToken, {
+      httpOnly: true,
+      maxAge: 72 * 60 * 60,
+    });
+
+    response.json({
+      message: "Signed in successfully",
+      name: findUser?.name,
+      email: findUser?.email,
+      phoneNumber: findUser?.phoneNumber,
+      refreshToken,
+    });
+  }
+);
+
+//Refresh Token
+const refreshUserToken = expressAsyncHandler(
+  async (request: Request, response: Response) => {
+    const refreshToken = request.cookies?.refreshToken;
+    const { userId } = await currentAuthenticatedUser();
+    const user = await UserModel.findOne({ cognitoUserId: userId });
+    request.user = user?.save();
+
+    if (!refreshToken || !userId) {
+      throw new Error(
+        "No refresh token in cookies or no authenticated user exists. Please signin again"
+      );
+    } else {
+      jwt.verify(refreshToken, process.env.JWT_SECRET!, function (
+        err: VerifyErrors | null,
+        decoded: JwtPayload | undefined
+      ) {
+        if (err || userId !== decoded?.id) {
+          throw new Error("There is something wrong with refresh token");
+        } else {
+          const accessToken = generateRefreshToken(userId);
+          response.json({ accessToken });
+        }
+      } as jwt.VerifyCallback);
     }
   }
 );
@@ -83,6 +156,7 @@ const loginUser = expressAsyncHandler(
 const logoutUser = expressAsyncHandler(
   async (request: Request, response: Response): Promise<void> => {
     await cognitoSignout();
+    response.clearCookie("refreshToken", { httpOnly: true, secure: true });
     response.json({ message: "User signed out successfully" });
   }
 );
@@ -145,6 +219,7 @@ const deleteAUser = expressAsyncHandler(
     const { id } = request.params;
     validateMongoDBId(id);
     const deleteAUser = await UserModel.findByIdAndDelete(id);
+    await deleteUser();
     response.json(deleteAUser);
   }
 );
@@ -218,6 +293,7 @@ export {
   createUser,
   verifyUser,
   loginUser,
+  refreshUserToken,
   logoutUser,
   logoutUserOfAllDevices,
   updateUser,

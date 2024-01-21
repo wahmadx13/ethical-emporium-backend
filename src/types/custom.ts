@@ -1,3 +1,6 @@
+import { DocumentType } from "@typegoose/typegoose";
+import { User } from "../models/userModel";
+
 export interface EmailSenderDataProps {
   to: string;
   from?: string;
@@ -10,10 +13,41 @@ export interface EmailSenderDataProps {
 
 // Sign up
 export interface SignupParameters {
-  username: string
+  username: string;
   name: string;
-  email: string
-  password: string
-  phone_number: string
-  role?: string
+  email: string;
+  password: string;
+  phone_number: string;
+  role?: string;
+}
+
+// Post Signup
+export interface CognitoSignUpResult {
+  isSignUpComplete: boolean;
+  userId: string | undefined;
+  nextStep: {
+    signUpStep: string;
+  };
+}
+
+//Verify User
+export interface CognitoSignUpVerifyResult {
+  isSignUpComplete: boolean;
+  nextStep: {};
+}
+
+//SignIn
+export interface CognitoSignInResult {
+  isSignedIn: boolean;
+  nextStep: {
+    signInStep: string;
+  };
+}
+
+export interface CognitoCurrentAuthUser {
+  userId: string;
+  signInDetails?: {
+    loginId?: string;
+    authFlowType?: string;
+  };
 }

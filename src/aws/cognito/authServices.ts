@@ -12,10 +12,17 @@ import {
   updatePassword,
   type UpdatePasswordInput,
 } from "aws-amplify/auth";
-import { SignupParameters } from "../../types/custom";
+import {
+  CognitoSignInResult,
+  CognitoSignUpResult,
+  CognitoSignUpVerifyResult,
+  SignupParameters,
+} from "../../types/custom";
 
 //Sign Up
-export const cognitoSignup = async (data: SignupParameters): Promise<void> => {
+export const cognitoSignup = async (
+  data: SignupParameters
+): Promise<CognitoSignUpResult> => {
   const { username, password, email, phone_number, name } = data;
   try {
     const { isSignUpComplete, userId, nextStep } = await signUp({
@@ -29,9 +36,7 @@ export const cognitoSignup = async (data: SignupParameters): Promise<void> => {
         },
       },
     });
-    console.log("isSignUpComplete", isSignUpComplete);
-    console.log("userId", userId);
-    console.log("nextStep", nextStep);
+    return { isSignUpComplete, userId, nextStep };
   } catch (err) {
     throw new Error(`Error while signing up: ${err}`);
   }
@@ -41,7 +46,7 @@ export const cognitoSignup = async (data: SignupParameters): Promise<void> => {
 export const cognitoVerifyUser = async ({
   username,
   confirmationCode,
-}: ConfirmSignUpInput): Promise<void> => {
+}: ConfirmSignUpInput): Promise<CognitoSignUpVerifyResult> => {
   console.log("username", username);
   console.log("confirmationCode", confirmationCode);
   try {
@@ -49,8 +54,7 @@ export const cognitoVerifyUser = async ({
       username,
       confirmationCode,
     });
-    console.log("isSignUpCompleteV", isSignUpComplete);
-    console.log("nextStepV", nextStep);
+    return { isSignUpComplete, nextStep };
   } catch (err) {
     throw new Error(`An error occurred during confirmation: ${err}`);
   }
@@ -60,11 +64,10 @@ export const cognitoVerifyUser = async ({
 export const cognitoSigninUser = async ({
   username,
   password,
-}: SignInInput): Promise<void> => {
+}: SignInInput): Promise<CognitoSignInResult> => {
   try {
     const { isSignedIn, nextStep } = await signIn({ username, password });
-    console.log("isSignedIn", isSignedIn);
-    console.log("nextStep", nextStep);
+    return { isSignedIn, nextStep };
   } catch (err) {
     throw new Error(`An error occurred during signin process: ${err}`);
   }
