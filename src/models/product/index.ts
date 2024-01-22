@@ -1,5 +1,10 @@
-import { prop, getModelForClass, Ref } from "@typegoose/typegoose";
-import { Types } from "mongoose";
+import {
+  prop,
+  getModelForClass,
+  Ref,
+  modelOptions,
+} from "@typegoose/typegoose";
+import mongoose, { Types } from "mongoose";
 import { User } from "../userModel";
 
 class Product {
@@ -24,19 +29,20 @@ class Product {
   @prop({ required: true })
   quantity!: number;
 
-  @prop({ required: true, type: () => [{ url: String }] })
-  images!: { url: string }[];
+  @prop({ type: [mongoose.Schema.Types.Mixed] })
+  images?: { url: string; public_id: string }[];
 
   @prop({ default: 0, select: false })
   sold?: number;
 
-  @prop({ default: [] })
+  @prop({ type: [mongoose.Schema.Types.Mixed] })
   color?: string[];
 
-  @prop({ default: [] })
+  @prop({ type: [mongoose.Schema.Types.Mixed] })
   tags?: string[];
 
   @prop({
+    ref: () => User,
     type: () => [{ star: Number, comment: String, postedBy: Types.ObjectId }],
   })
   ratings?: { star: number; comment: string; postedBy: Ref<User> }[];
