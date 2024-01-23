@@ -51,3 +51,10 @@ export interface CognitoCurrentAuthUser {
     authFlowType?: string;
   };
 }
+
+export interface ImageResult {
+  secure_url: string;
+  url: string;
+  asset_id: string;
+  public_id: string;
+}

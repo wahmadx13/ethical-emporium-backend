@@ -2,9 +2,11 @@ import { Request, Response } from "express";
 import { DocumentType } from "@typegoose/typegoose";
 import slugify from "slugify";
 import expressAsyncHandler from "express-async-handler";
+const fs = require("fs");
 import { Product } from "../../models/product";
 import { User } from "../../models/userModel";
 import { ProductModel, UserModel } from "../../models";
+import { imageUpload, deleteImages } from "../../utils/cloudinary";
 
 //Create Product
 const createProduct = expressAsyncHandler(
@@ -183,6 +185,37 @@ const rating = expressAsyncHandler(
   }
 );
 
+const uploadProductImages = expressAsyncHandler(
+  async (request: Request, response: Response) => {
+    const urls = [];
+    const files = request.files;
+
+    if (Array.isArray(files)) {
+      for (const file of files) {
+        try {
+          const { path } = file;
+          const newPath = await imageUpload(path);
+          urls.push(newPath);
+          fs.unlinkSync(path);
+        } catch (err) {
+          console.error("Error uploading image", err);
+        }
+      }
+
+      const images = urls.map((url) => url);
+      response.json(images);
+    }
+  }
+);
+
+const deleteProductImages = expressAsyncHandler(
+  async (request: Request, response: Response) => {
+    const { id } = request.params;
+    const deleteProdImages = deleteImages(id);
+    response.json({ message: "deleted" });
+  }
+);
+
 export {
   createProduct,
   updateAProduct,
@@ -191,4 +224,7 @@ export {
   deleteAProduct,
   addToWishlist,
   rating,
+  uploadProductImages,
+  deleteProductImages,
 };
+

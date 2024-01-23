@@ -7,13 +7,21 @@ import {
   getAllProducts,
   rating,
   updateAProduct,
+  uploadProductImages,
 } from "../../services/productServices";
 import { authMiddleware } from "../../middleware/authMiddleware";
 import { isAdmin } from "../../middleware/isAdmin";
+import { resizeProductImage, uploadPhoto } from "../../middleware/uploadImage";
 
 const router = express.Router();
 
 router.post("/", authMiddleware, isAdmin, createProduct);
+router.post(
+  "/upload-product-images",
+  uploadPhoto.array("images", 10),
+  resizeProductImage,
+  uploadProductImages
+);
 router.put("/wishlist", authMiddleware, addToWishlist);
 router.put("/rating", authMiddleware, rating);
 router.get("/", getAllProducts);
