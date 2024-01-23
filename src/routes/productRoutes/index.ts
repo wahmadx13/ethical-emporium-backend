@@ -14,10 +14,10 @@ import { isAdmin } from "../../middleware/isAdmin";
 const router = express.Router();
 
 router.post("/", authMiddleware, isAdmin, createProduct);
-router.put("/:id", authMiddleware, isAdmin, updateAProduct);
 router.put("/wishlist", authMiddleware, addToWishlist);
 router.put("/rating", authMiddleware, rating);
 router.get("/", getAllProducts);
+router.put("/:id", authMiddleware, isAdmin, updateAProduct);
 router.get("/:id", getAProduct);
 router.delete("/:id", authMiddleware, isAdmin, deleteAProduct);
 

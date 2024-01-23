@@ -1,13 +1,18 @@
-import {
-  prop,
-  getModelForClass,
-  Ref,
-  modelOptions,
-} from "@typegoose/typegoose";
+import { prop, Ref, modelOptions } from "@typegoose/typegoose";
 import mongoose, { Types } from "mongoose";
 import { User } from "../userModel";
 
-class Product {
+class Rating {
+  @prop()
+  star?: number;
+
+  @prop()
+  comment?: string;
+
+  @prop({ ref: () => User, type: mongoose.Schema.Types.ObjectId })
+  postedBy?: Ref<User>;
+}
+export class Product {
   @prop({ required: true, trim: true })
   title!: string;
 
@@ -41,11 +46,8 @@ class Product {
   @prop({ type: [mongoose.Schema.Types.Mixed] })
   tags?: string[];
 
-  @prop({
-    ref: () => User,
-    type: () => [{ star: Number, comment: String, postedBy: Types.ObjectId }],
-  })
-  ratings?: { star: number; comment: string; postedBy: Ref<User> }[];
+  @prop({ type: () => [Rating], default: [] })
+  ratings?: Rating[];
 
   @prop({ default: 0 })
   totalRating?: number;
@@ -56,7 +58,3 @@ class Product {
   @prop({ timestamps: true })
   updatedAt?: Date;
 }
-
-const ProductModel = getModelForClass(Product);
-
-export { Product, ProductModel };

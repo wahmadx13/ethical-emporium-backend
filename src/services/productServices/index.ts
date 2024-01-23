@@ -2,8 +2,9 @@ import { Request, Response } from "express";
 import { DocumentType } from "@typegoose/typegoose";
 import slugify from "slugify";
 import expressAsyncHandler from "express-async-handler";
-import { Product, ProductModel } from "../../models/product";
-import { User, UserModel } from "../../models/userModel";
+import { Product } from "../../models/product";
+import { User } from "../../models/userModel";
+import { ProductModel, UserModel } from "../../models";
 
 //Create Product
 const createProduct = expressAsyncHandler(
@@ -112,18 +113,19 @@ const addToWishlist = expressAsyncHandler(
       (id) => id.toString() === productId
     );
     if (alreadyAdded) {
-      let user: DocumentType<User> | null = await UserModel.findByIdAndUpdate(
+      const user: DocumentType<User> | null = await UserModel.findByIdAndUpdate(
         _id,
         { $pull: { wishList: productId } },
         { new: true }
       );
       response.json(user);
     } else {
-      let user: DocumentType<User> | null = await UserModel.findByIdAndUpdate(
+      const user: DocumentType<User> | null = await UserModel.findByIdAndUpdate(
         _id,
         { $push: { wishList: productId } },
         { new: true }
       );
+      await user?.populate("wishList");
       response.json(user);
     }
   }
@@ -134,56 +136,49 @@ const rating = expressAsyncHandler(
   async (request: Request, response: Response): Promise<void> => {
     const { _id } = request.user;
     const { star, productId, comment } = request.body;
+
+    // Find the product
     const product: DocumentType<Product> | null = await ProductModel.findById(
       productId
     );
-    let alreadyRated = product?.ratings?.find((userId) => {
-      userId.postedBy.toString() === _id.toString();
-    });
-    if (alreadyRated) {
-      await ProductModel.updateOne(
-        {
-          ratings: { $elemMatch: alreadyRated },
-        },
-        {
-          $set: {
-            "ratings.$.star": star,
-            "ratings.$.comment": comment,
-          },
-        },
-        { new: true }
-      );
+
+    // Update the user's existing rating if it exists
+    const userRating = product?.ratings?.find(
+      (rating) => rating.postedBy?.toString() === _id.toString()
+    );
+
+    if (userRating) {
+      userRating.star = star;
+      userRating.comment = comment;
     } else {
-      await ProductModel.findByIdAndUpdate(
-        productId,
-        {
-          $push: {
-            ratings: {
-              star: star,
-              comment: comment,
-              postedBy: _id,
-            },
-          },
-        },
-        { new: true }
-      );
+      // If the user hasn't rated before, add a new rating
+      product?.ratings?.push({
+        star: star,
+        comment: comment,
+        postedBy: _id,
+      });
     }
-    const getAllRatings = await ProductModel.findById(productId);
 
-    let totalRating = getAllRatings?.ratings?.length;
+    // Save the updated product
+    const updatedProduct = await product?.save();
 
-    let ratingSum = getAllRatings?.ratings
+    // Recalculate the total rating and update the product
+    const totalRating = updatedProduct?.ratings?.length || 0;
+    const ratingSum = updatedProduct?.ratings
       ?.map((item) => item.star)
-      .reduce((prev, curr) => prev + curr, 0);
+      .reduce((prev, curr) => prev! + curr!, 0);
 
-    let actualRating = Math.round(ratingSum! / totalRating!);
-    let finalProduct = await ProductModel.findByIdAndUpdate(
+    const actualRating =
+      totalRating === 0 ? 0 : Math.round(ratingSum! / totalRating);
+
+    const finalProduct = await ProductModel.findByIdAndUpdate(
       productId,
       {
         totalRating: actualRating,
       },
       { new: true }
     );
+
     response.json(finalProduct);
   }
 );

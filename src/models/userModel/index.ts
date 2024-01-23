@@ -1,7 +1,7 @@
-import { prop, getModelForClass, Ref } from "@typegoose/typegoose";
+import { prop, Ref } from "@typegoose/typegoose";
 import { Types } from "mongoose";
 import { Product } from "../product";
-class User {
+export class User {
   @prop({ required: true, type: Types.ObjectId })
   _id!: Types.ObjectId;
 
@@ -29,7 +29,7 @@ class User {
   @prop({ type: () => [Types.ObjectId], default: [] })
   cart?: Types.ObjectId[];
 
-  @prop({ ref: "Product" })
+  @prop({ ref: () => Product, type: Types.ObjectId })
   wishList?: Ref<Product>[];
 
   @prop({ timestamps: true })
@@ -38,7 +38,3 @@ class User {
   @prop({ timestamps: true })
   updatedAt?: Date;
 }
-
-const UserModel = getModelForClass(User);
-
-export { User, UserModel };

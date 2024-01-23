@@ -1,6 +1,6 @@
 import { Request, Response, NextFunction } from "express";
 import expressAsyncHandler from "express-async-handler";
-import { UserModel } from "../models/userModel";
+import { UserModel } from "../models";
 
 export const isAdmin = expressAsyncHandler(
   async (
