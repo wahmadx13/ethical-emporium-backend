@@ -20,11 +20,11 @@ const updateBlogCategory = expressAsyncHandler(
   async (request: Request, response: Response): Promise<void> => {
     const { id } = request.params;
     validateMongoDBId(id);
-    const updateBlog: DocumentType<BlogCategory> | null =
+    const updateCategory: DocumentType<BlogCategory> | null =
       await BlogCategoryModel.findByIdAndUpdate(id, request.body, {
         new: true,
       });
-    response.json(updateBlog);
+    response.json(updateCategory);
   }
 );
 

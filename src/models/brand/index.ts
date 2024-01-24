@@ -5,7 +5,7 @@ import { prop, modelOptions } from "@typegoose/typegoose";
     timestamps: true,
   },
 })
-export class BlogCategory {
+export class Brand {
   @prop({ required: true, unique: true, index: true })
   title!: string;
 }
