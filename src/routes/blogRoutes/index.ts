@@ -15,7 +15,7 @@ import { resizeBlogImage, uploadPhoto } from "../../middleware/imageMiddleware";
 
 const router = express.Router();
 
-router.post("/", createBlog);
+router.post("/", authMiddleware, isAdmin, createBlog);
 router.put(
   "/upload-blog-images/:id",
   authMiddleware,
@@ -26,9 +26,9 @@ router.put(
 );
 router.put("/like-blog", authMiddleware, likeABlog);
 router.put("/dislike-blog", authMiddleware, dislikeABlog);
-router.put("/:id", updateABlog);
+router.put("/:id", authMiddleware, isAdmin, updateABlog);
 router.get("/", getAllBlogs);
 router.get("/:id", getABlog);
-router.delete("/:id", deleteABlog);
+router.delete("/:id", authMiddleware, isAdmin, deleteABlog);
 
 export default router;
