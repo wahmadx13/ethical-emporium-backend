@@ -4,6 +4,7 @@
         "cognitouserpresignup",
         "fieldname",
         "Signout",
-        "uuidv"
+        "uuidv",
+        "virtuals"
     ]
 }
