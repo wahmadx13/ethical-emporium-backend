@@ -15,6 +15,7 @@ import authRouter from "./routes/authRoutes";
 import productRouter from "./routes/productRoutes";
 import blogRouter from "./routes/blogRoutes";
 import blogCategoryRouter from "./routes/blogCategoryRoutes";
+import brandRouter from "./routes/brandRoutes";
 
 //initialize express
 const app = express();
@@ -41,6 +42,7 @@ app.use("/api/user", authRouter);
 app.use("/api/product", productRouter);
 app.use("/api/blog", blogRouter);
 app.use("/api/blog-category", blogCategoryRouter);
+app.use("/api/brand", brandRouter);
 
 //error handlers
 app.use(notFound);
