@@ -14,6 +14,7 @@ import userAmplifyConfiguration from "./config/awsAmplifyUserConfig";
 import authRouter from "./routes/authRoutes";
 import productRouter from "./routes/productRoutes";
 import blogRouter from "./routes/blogRoutes";
+import blogCategoryRouter from "./routes/blogCategoryRoutes";
 
 //initialize express
 const app = express();
@@ -39,6 +40,7 @@ const PORT = process.env.PORT || 4000;
 app.use("/api/user", authRouter);
 app.use("/api/product", productRouter);
 app.use("/api/blog", blogRouter);
+app.use("/api/blog-category", blogCategoryRouter);
 
 //error handlers
 app.use(notFound);
