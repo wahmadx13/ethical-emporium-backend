@@ -75,7 +75,7 @@ const resizeBlogImage = async (
   if (!request.files) return next();
   const files = request.files as Express.Multer.File[];
   await Promise.all(
-    files.map(async (file) => {
+    files.map(async (file): Promise<void> => {
       await sharp(file.path)
         .resize(300, 300)
         .toFormat("jpeg")

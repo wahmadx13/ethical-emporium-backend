@@ -1,5 +1,5 @@
-import { prop, Ref, modelOptions } from "@typegoose/typegoose";
-import mongoose, { Types } from "mongoose";
+import { prop, Ref, modelOptions, Severity } from "@typegoose/typegoose";
+import mongoose from "mongoose";
 import { User } from "../userModel";
 
 class Rating {
@@ -12,6 +12,11 @@ class Rating {
   @prop({ ref: () => User, type: mongoose.Schema.Types.ObjectId })
   postedBy?: Ref<User>;
 }
+@modelOptions({
+  options: {
+    allowMixed: Severity.ALLOW,
+  },
+})
 export class Product {
   @prop({ required: true, trim: true })
   title!: string;
