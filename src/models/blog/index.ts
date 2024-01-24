@@ -16,10 +16,13 @@ export class Blog {
   @prop({ required: true, unique: true, index: true })
   title!: string;
 
-  @prop({ required: true, unique: true })
+  @prop({ required: true, unique: true, lowercase: true })
+  slug!: string;
+
+  @prop({ required: true })
   description!: string;
 
-  @prop({ required: true, unique: true })
+  @prop({ required: true })
   category!: string[];
 
   @prop({ default: 0 })
