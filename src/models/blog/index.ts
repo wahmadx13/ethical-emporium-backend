@@ -35,10 +35,10 @@ export class Blog {
   isDisliked?: boolean;
 
   @prop({ ref: () => User, type: [Types.ObjectId] })
-  likes?: Ref<User>;
+  likes?: Ref<User>[];
 
   @prop({ ref: () => User, type: [Types.ObjectId] })
-  dislikes?: Ref<User>;
+  dislikes?: Ref<User>[];
 
   @prop({
     type: [mongoose.Schema.Types.Mixed],

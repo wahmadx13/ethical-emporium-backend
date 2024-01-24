@@ -187,6 +187,7 @@ const rating = expressAsyncHandler(
 
 const uploadProductImages = expressAsyncHandler(
   async (request: Request, response: Response) => {
+    const { id } = request.params;
     const uploader = (path: string) => imageUpload(path);
     const urls = [];
     const files = request.files;
@@ -200,7 +201,19 @@ const uploadProductImages = expressAsyncHandler(
       }
 
       const images = urls.map((file) => file);
-      response.json(images);
+
+      const updateProduct: DocumentType<Product> | null =
+        await ProductModel.findByIdAndUpdate(
+          id,
+          {
+            images,
+          },
+          { new: true }
+        );
+      response.json({
+        images,
+        updateProduct,
+      });
     }
   }
 );
@@ -209,7 +222,7 @@ const deleteProductImages = expressAsyncHandler(
   async (request: Request, response: Response) => {
     const { id } = request.params;
     const deleteProdImages = deleteImages(id);
-    response.json({ message: "deleted" });
+    response.json({ message: "deleted", deleteImages });
   }
 );
 

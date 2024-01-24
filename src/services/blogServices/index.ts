@@ -5,6 +5,8 @@ import slugify from "slugify";
 import { Blog } from "../../models/blog";
 import { BlogModel } from "../../models";
 import { validateMongoDBId } from "../../utils/helper";
+import { imageUpload } from "../../utils/cloudinary";
+const fs = require("fs");
 
 //Create A Blog
 const createBlog = expressAsyncHandler(
@@ -57,11 +59,161 @@ const getAllBlogs = expressAsyncHandler(
 );
 
 //Delete A Blog
-const deleteABlog = expressAsyncHandler(async (request: Request, response: Response): Promise<void> => {
+const deleteABlog = expressAsyncHandler(
+  async (request: Request, response: Response): Promise<void> => {
     const { id } = request.params;
-    validateMongoDBId(id)
-    const deleteBlog: DocumentType<Blog> | null = await BlogModel.findByIdAndDelete(id)
-    response.json(deleteBlog)
-})
+    validateMongoDBId(id);
+    const deleteBlog: DocumentType<Blog> | null =
+      await BlogModel.findByIdAndDelete(id);
+    response.json(deleteBlog);
+  }
+);
 
-export { createBlog, updateABlog, getABlog, getAllBlogs, deleteABlog };
+//Like A Blog
+const likeABlog = expressAsyncHandler(
+  async (request: Request, response: Response) => {
+    const { blogId } = request.body;
+    validateMongoDBId(blogId);
+
+    const blog: DocumentType<Blog> | null = await BlogModel.findById(blogId);
+
+    const loginUserId: string = request?.user?._id;
+
+    const isLiked: boolean | undefined = blog?.isLiked;
+
+    const alreadyDisliked = (blog?.dislikes as string[] | undefined)?.some(
+      (userId) => userId?.toString() === loginUserId?.toString()
+    );
+
+    if (alreadyDisliked) {
+      const blog: DocumentType<Blog> | null = await BlogModel.findByIdAndUpdate(
+        blogId,
+        {
+          $pull: { dislikes: loginUserId },
+          dislikes: false,
+        },
+
+        { new: true }
+      );
+      response.json(blog);
+    } else if (isLiked) {
+      const blog: DocumentType<Blog> | null = await BlogModel.findByIdAndUpdate(
+        blogId,
+        {
+          $pull: { likes: loginUserId },
+          isLiked: false,
+        },
+        { new: true }
+      );
+      response.json(blog);
+    } else {
+      const blog: DocumentType<Blog> | null = await BlogModel.findByIdAndUpdate(
+        blogId,
+        {
+          $push: { likes: loginUserId },
+          isLiked: true,
+        },
+        {
+          new: true,
+        }
+      );
+      response.json(blog);
+    }
+  }
+);
+
+//Dislike A Blog
+const dislikeABlog = expressAsyncHandler(
+  async (request: Request, response: Response): Promise<void> => {
+    const { blogId } = request.body;
+    validateMongoDBId(blogId);
+
+    const blog: DocumentType<Blog> | null = await BlogModel.findById(blogId);
+
+    const loginUserId = request?.user?.id;
+
+    const isDisliked = blog?.isDisliked;
+
+    const alreadyLiked = (blog?.likes as string[] | undefined)?.some(
+      (userId) => userId?.toString() === loginUserId?.toString()
+    );
+
+    if (alreadyLiked) {
+      const blog: DocumentType<Blog> | null = await BlogModel.findByIdAndUpdate(
+        blogId,
+        {
+          $pull: { likes: loginUserId },
+          isLiked: false,
+        },
+        {
+          new: true,
+        }
+      );
+      response.json(blog);
+    } else if (isDisliked) {
+      const blog: DocumentType<Blog> | null = await BlogModel.findByIdAndUpdate(
+        blogId,
+        {
+          $pull: { dislikes: loginUserId },
+          isDisliked: false,
+        },
+        { new: true }
+      );
+      response.json(blog);
+    } else {
+      const blog: DocumentType<Blog> | null = await BlogModel.findByIdAndUpdate(
+        blogId,
+        {
+          $push: { dislikes: loginUserId },
+          isDisliked: true,
+        },
+        { new: true }
+      );
+      response.json(blog);
+    }
+  }
+);
+
+const uploadBlogImages = expressAsyncHandler(
+  async (request: Request, response: Response) => {
+    const { id } = request.params;
+    const uploader = (path: string) => imageUpload(path);
+    const urls = [];
+    const files = request.files;
+
+    if (Array.isArray(files)) {
+      for (const file of files) {
+        const { path } = file;
+        const newPath = await uploader(path);
+        urls.push(newPath);
+        fs.unlinkSync(path);
+      }
+
+      const images = urls.map((file) => file);
+
+      const updateBlog: DocumentType<Blog> | null =
+        await BlogModel.findByIdAndUpdate(
+          id,
+          {
+            images,
+          },
+          { new: true }
+        );
+      response.json({
+        images,
+        updateBlog,
+      });
+    }
+  }
+);
+
+export {
+  createBlog,
+  updateABlog,
+  getABlog,
+  getAllBlogs,
+  deleteABlog,
+  likeABlog,
+  dislikeABlog,
+  uploadBlogImages,
+};

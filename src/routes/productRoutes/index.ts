@@ -20,8 +20,8 @@ import {
 const router = express.Router();
 
 router.post("/", authMiddleware, isAdmin, createProduct);
-router.post(
-  "/upload-product-images",
+router.put(
+  "/upload-product-images/:id",
   authMiddleware,
   isAdmin,
   uploadPhoto.array("images", 10),
