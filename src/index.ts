@@ -16,6 +16,7 @@ import productRouter from "./routes/productRoutes";
 import blogRouter from "./routes/blogRoutes";
 import blogCategoryRouter from "./routes/blogCategoryRoutes";
 import brandRouter from "./routes/brandRoutes";
+import productCategoryRouter from "./routes/productCategoryRoutes";
 
 //initialize express
 const app = express();
@@ -43,6 +44,7 @@ app.use("/api/product", productRouter);
 app.use("/api/blog", blogRouter);
 app.use("/api/blog-category", blogCategoryRouter);
 app.use("/api/brand", brandRouter);
+app.use("/api/product-category", productCategoryRouter);
 
 //error handlers
 app.use(notFound);

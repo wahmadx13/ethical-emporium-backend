@@ -11,4 +11,4 @@ export const ProductModel = getModelForClass(Product);
 export const BlogModel = getModelForClass(Blog);
 export const BlogCategoryModel = getModelForClass(BlogCategory);
 export const BrandModel = getModelForClass(Brand);
-export const productCategoryModel = getModelForClass(ProductCategory);
+export const ProductCategoryModel = getModelForClass(ProductCategory);
