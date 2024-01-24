@@ -49,7 +49,6 @@ const getABlog = expressAsyncHandler(
 );
 
 //Get All Blogs
-
 const getAllBlogs = expressAsyncHandler(
   async (request: Request, response: Response): Promise<void> => {
     const getBlogs: DocumentType<Blog>[] = await BlogModel.find();
@@ -57,4 +56,12 @@ const getAllBlogs = expressAsyncHandler(
   }
 );
 
-export { createBlog, updateABlog, getABlog, getAllBlogs };
+//Delete A Blog
+const deleteABlog = expressAsyncHandler(async (request: Request, response: Response): Promise<void> => {
+    const { id } = request.params;
+    validateMongoDBId(id)
+    const deleteBlog: DocumentType<Blog> | null = await BlogModel.findByIdAndDelete(id)
+    response.json(deleteBlog)
+})
+
+export { createBlog, updateABlog, getABlog, getAllBlogs, deleteABlog };
