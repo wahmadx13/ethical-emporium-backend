@@ -1,10 +1,6 @@
 import { Amplify } from "aws-amplify";
 
 const userAmplifyConfiguration = () => {
-  console.log(
-    "User amplify loaded successfully",
-    process.env.CUSTOMER_USER_POOL_ID
-  );
   Amplify.configure({
     Auth: {
       Cognito: {

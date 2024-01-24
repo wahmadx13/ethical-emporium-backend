@@ -2,7 +2,8 @@ import { Request, Response } from "express";
 import { DocumentType } from "@typegoose/typegoose";
 import jwt, { VerifyErrors, JwtPayload } from "jsonwebtoken";
 import expressAsyncHandler from "express-async-handler";
-import { UserModel, User } from "../../models/userModel";
+import { User } from "../../models/userModel";
+import { UserModel } from "../../models";
 import { validateMongoDBId } from "../../utils/helper";
 import {
   cognitoGlobalSignout,

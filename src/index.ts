@@ -12,6 +12,7 @@ import errorHandler from "./middleware/errorHandler";
 import userAmplifyConfiguration from "./config/awsAmplifyUserConfig";
 
 import authRouter from "./routes/authRoutes";
+import productRouter from "./routes/productRoutes";
 
 //initialize express
 const app = express();
@@ -35,6 +36,7 @@ const PORT = process.env.PORT || 4000;
 
 //routes
 app.use("/api/user", authRouter);
+app.use("/api/product", productRouter);
 
 //error handlers
 app.use(notFound);

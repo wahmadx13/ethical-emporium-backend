@@ -3,7 +3,8 @@ import { DocumentType } from "@typegoose/typegoose";
 import jwt, { JwtPayload } from "jsonwebtoken";
 import { getCurrentUser } from "aws-amplify/auth";
 import { CognitoCurrentAuthUser } from "../types/custom";
-import { UserModel, User } from "../models/userModel";
+import { User } from "../models/userModel";
+import { UserModel } from "../models";
 
 export const currentAuthenticatedUser =
   async (): Promise<CognitoCurrentAuthUser> => {
@@ -23,7 +24,6 @@ export const authMiddleware = async (
   let token;
   if (request?.headers.authorization?.startsWith("Bearer")) {
     token = request.headers.authorization.split(" ")[1];
-    console.log("token!!!!!!!!!!!!!!", token);
     if (token) {
       const decoded = (await jwt.verify(
         token,
@@ -33,6 +33,7 @@ export const authMiddleware = async (
         cognitoUserId: decoded?.id,
       });
       request.user = await user?.save();
+      console.log("req.user", request.user);
       next();
     }
   } else {
