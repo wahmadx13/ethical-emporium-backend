@@ -1,32 +1,34 @@
 import { cloudinary } from "../config/cloudinaryConfig";
-import { ImageResult } from "../types/custom";
 
-export const imageUpload = async (file: any) => {
+export const imageUpload = (file: any) => {
   return new Promise((resolve: any) => {
-    cloudinary.uploader.upload(file, (result: ImageResult) => {
-      console.log("Cloudinary upload result:", result);
-      resolve(
-        {
-          url: result.secure_url,
-          asset_id: result.asset_id,
-          public_id: result.public_id,
-        },
-        {
-          resource_type: "auto",
+    cloudinary.uploader.upload(
+      file,
+      { resource_type: "auto" },
+      (error, result: any) => {
+        if (error) {
+          console.error("Error uploading to Cloudinary:", error);
+          resolve(null);
+        } else {
+          resolve({
+            url: result?.secure_url,
+            asset_id: result?.asset_id,
+            public_id: result?.public_id,
+          });
         }
-      );
-    });
+      }
+    );
   });
 };
 
 export const deleteImages = async (file: any) => {
-  return new Promise((resolve: any) => {
-    cloudinary.uploader.destroy(file, (result: ImageResult) => {
+  return await new Promise((resolve: any) => {
+    cloudinary.uploader.destroy(file, (result: any) => {
       resolve(
         {
-          url: result.secure_url,
-          asset_id: result.asset_id,
-          public_id: result.public_id,
+          url: result?.secure_url,
+          asset_id: result?.asset_id,
+          public_id: result?.public_id,
         },
         {
           resource_type: "auto",

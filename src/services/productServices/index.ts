@@ -187,22 +187,19 @@ const rating = expressAsyncHandler(
 
 const uploadProductImages = expressAsyncHandler(
   async (request: Request, response: Response) => {
+    const uploader = (path: string) => imageUpload(path);
     const urls = [];
     const files = request.files;
 
     if (Array.isArray(files)) {
       for (const file of files) {
-        try {
-          const { path } = file;
-          const newPath = await imageUpload(path);
-          urls.push(newPath);
-          fs.unlinkSync(path);
-        } catch (err) {
-          console.error("Error uploading image", err);
-        }
+        const { path } = file;
+        const newPath = await uploader(path);
+        urls.push(newPath);
+        fs.unlinkSync(path);
       }
 
-      const images = urls.map((url) => url);
+      const images = urls.map((file) => file);
       response.json(images);
     }
   }
