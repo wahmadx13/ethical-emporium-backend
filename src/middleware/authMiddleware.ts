@@ -33,7 +33,6 @@ export const authMiddleware = async (
         cognitoUserId: decoded?.id,
       });
       request.user = await user?.save();
-      console.log("req.user", request.user);
       next();
     }
   } else {
