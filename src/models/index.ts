@@ -7,6 +7,7 @@ import { Brand } from "./brand";
 import { ProductCategory } from "./productCategory";
 import { Color } from "./color";
 import { Coupon } from "./coupon";
+import { Enquiry } from "./enquiry";
 
 export const UserModel = getModelForClass(User);
 export const ProductModel = getModelForClass(Product);
@@ -16,3 +17,4 @@ export const BrandModel = getModelForClass(Brand);
 export const ProductCategoryModel = getModelForClass(ProductCategory);
 export const ColorModel = getModelForClass(Color);
 export const CouponModel = getModelForClass(Coupon);
+export const EnquiryModel = getModelForClass(Enquiry);
