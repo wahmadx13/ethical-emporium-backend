@@ -18,6 +18,7 @@ import blogCategoryRouter from "./routes/blogCategoryRoutes";
 import brandRouter from "./routes/brandRoutes";
 import productCategoryRouter from "./routes/productCategoryRoutes";
 import colorRouter from "./routes/colorRoutes";
+import enquiryRouter from "./routes/enquiryRoutes";
 
 //initialize express
 const app = express();
@@ -47,6 +48,7 @@ app.use("/api/blog-category", blogCategoryRouter);
 app.use("/api/brand", brandRouter);
 app.use("/api/product-category", productCategoryRouter);
 app.use("/api/color", colorRouter);
+app.use("/api/enquiry", enquiryRouter);
 
 //error handlers
 app.use(notFound);
