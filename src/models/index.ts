@@ -1,5 +1,5 @@
 import { getModelForClass } from "@typegoose/typegoose";
-import { User } from "./userModel";
+import { User } from "./user";
 import { Product } from "./product";
 import { Blog } from "./blog";
 import { BlogCategory } from "./blogCategory";
@@ -8,7 +8,6 @@ import { ProductCategory } from "./productCategory";
 import { Color } from "./color";
 import { Coupon } from "./coupon";
 import { Enquiry } from "./enquiry";
-import { Cart } from "./cart";
 
 export const UserModel = getModelForClass(User);
 export const ProductModel = getModelForClass(Product);
@@ -19,4 +18,3 @@ export const ProductCategoryModel = getModelForClass(ProductCategory);
 export const ColorModel = getModelForClass(Color);
 export const CouponModel = getModelForClass(Coupon);
 export const EnquiryModel = getModelForClass(Enquiry);
-export const CartModel = getModelForClass(Cart);

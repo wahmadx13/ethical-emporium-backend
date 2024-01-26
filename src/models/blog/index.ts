@@ -1,6 +1,6 @@
 import { prop, Ref, modelOptions, Severity } from "@typegoose/typegoose";
 import mongoose, { Types } from "mongoose";
-import { User } from "../userModel";
+import { User } from "../user";
 
 @modelOptions({
   schemaOptions: {
