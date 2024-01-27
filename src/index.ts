@@ -20,7 +20,7 @@ import productCategoryRouter from "./routes/productCategoryRoutes";
 import colorRouter from "./routes/colorRoutes";
 import couponRouter from "./routes/couponRoutes";
 import enquiryRouter from "./routes/enquiryRoutes";
-import cartRouter from "./routes/userRoutes";
+import userRouter from "./routes/userRoutes";
 
 //initialize express
 const app = express();
@@ -52,7 +52,7 @@ app.use("/api/product-category", productCategoryRouter);
 app.use("/api/color", colorRouter);
 app.use("/api/coupon", couponRouter);
 app.use("/api/enquiry", enquiryRouter);
-app.use("/api/cart", cartRouter);
+app.use("/api/user", userRouter);
 
 //error handlers
 app.use(notFound);
