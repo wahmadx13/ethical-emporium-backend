@@ -3,7 +3,7 @@ import { DocumentType } from "@typegoose/typegoose";
 import jwt, { JwtPayload } from "jsonwebtoken";
 import { getCurrentUser } from "aws-amplify/auth";
 import { CognitoCurrentAuthUser } from "../types/custom";
-import { User } from "../models/userModel";
+import { User } from "../models/user";
 import { UserModel } from "../models";
 
 export const currentAuthenticatedUser =

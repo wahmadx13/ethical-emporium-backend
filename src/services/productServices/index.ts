@@ -4,7 +4,7 @@ import slugify from "slugify";
 import expressAsyncHandler from "express-async-handler";
 const fs = require("fs");
 import { Product } from "../../models/product";
-import { User } from "../../models/userModel";
+import { User } from "../../models/user";
 import { ProductModel, UserModel } from "../../models";
 import { imageUpload, deleteImages } from "../../utils/cloudinary";
 

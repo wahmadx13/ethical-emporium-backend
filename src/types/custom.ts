@@ -1,5 +1,5 @@
 import { DocumentType } from "@typegoose/typegoose";
-import { User } from "../models/userModel";
+import { User } from "../models/user";
 
 export interface EmailSenderDataProps {
   to: string;

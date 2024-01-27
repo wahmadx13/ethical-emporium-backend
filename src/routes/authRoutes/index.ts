@@ -15,7 +15,7 @@ import {
   logoutUserOfAllDevices,
   forgotUserPassword,
   refreshUserToken,
-} from "../../services/userServices";
+} from "../../services/authServices";
 import { isAdmin } from "../../middleware/isAdmin";
 import { authMiddleware } from "../../middleware/authMiddleware";
 

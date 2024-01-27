@@ -1,5 +1,5 @@
 import { getModelForClass } from "@typegoose/typegoose";
-import { User } from "./userModel";
+import { User } from "./user";
 import { Product } from "./product";
 import { Blog } from "./blog";
 import { BlogCategory } from "./blogCategory";
