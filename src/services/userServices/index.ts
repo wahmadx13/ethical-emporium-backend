@@ -68,4 +68,38 @@ const addToUserCart = expressAsyncHandler(
   }
 );
 
-export { addToUserCart };
+//Remove From Cart
+const removeAnItemFromCart = expressAsyncHandler(async (request:Request, response: Response): Promise<void> => {
+  const { productId, color } = request.body;
+  const { _id } = request.user
+  validateMongoDBId(_id)
+
+  
+  const user: DocumentType<User> | null = await UserModel.findById(_id);
+  const remainingItem: CartProduct[] = user?.cart
+    ? user.cart.filter(
+        (item) => !(item._id!.toString() === productId && item.color === color)
+      )
+    : [];
+  
+  const cartTotal = remainingItem.reduce(
+    (total, item) => total + item.totalPrice!,
+    0
+  );
+    
+  const updatedCart: DocumentType<User> | null =
+    await UserModel.findByIdAndUpdate(_id, { cart: remainingItem, cartTotal }, { new: true });
+  response.json(updatedCart)
+})
+
+//Empty User Cart
+const emptyUserCart = expressAsyncHandler(async (request:Request, response: Response): Promise<void> => {
+  const { _id } = request.user;
+  validateMongoDBId(_id)
+
+  const emptyCart: DocumentType<User> | null = await UserModel.findByIdAndUpdate(_id, { cart: [], cartTotal: 0, totalAfterDiscount: 0 }, { new: true })
+
+  response.json(emptyCart)
+})
+
+export { addToUserCart, removeAnItemFromCart, emptyUserCart };
