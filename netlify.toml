@@ -1,0 +1,4 @@
+[[redirects]]
+  from = "/api/*"
+  to = "https://unique-tiramisu-ac20d1.netlify.app/api/:splat"
+  status = 200
