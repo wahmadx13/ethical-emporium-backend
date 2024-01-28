@@ -1,4 +1,4 @@
-import express from "express";
+import { router } from "../../utils/constants";
 import { authMiddleware } from "../../middleware/authMiddleware";
 import {
   addToUserCart,
@@ -12,8 +12,6 @@ import {
   updateOrderStatus,
 } from "../../services/userServices";
 import { isAdmin } from "../../middleware/isAdmin";
-
-const router = express.Router();
 
 //User Cart Routes
 router.post("/cart", authMiddleware, addToUserCart);

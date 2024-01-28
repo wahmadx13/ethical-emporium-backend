@@ -4,6 +4,7 @@
   "main": "src/index.ts",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
+    "build": "tsc --build",
     "start": "ts-node src/index.ts",
     "server": "nodemon --ext ts,json src/index.ts"
   },
