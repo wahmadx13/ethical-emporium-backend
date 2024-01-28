@@ -10,6 +10,11 @@
     "add-build": "git add dist",
     "server": "nodemon --ext ts,json src/index.ts"
   },
+  "pre-commit": [
+    "ts.check",
+    "build",
+    "add-build"
+  ],
   "keywords": [],
   "author": "",
   "license": "ISC",
@@ -49,6 +54,8 @@
     "@types/multer-s3": "^3.0.3",
     "@types/nodemailer": "^6.4.14",
     "nodemon": "^3.0.2",
+    "pre-commit": "^1.2.2",
+    "rimraf": "^5.0.5",
     "ts-node": "^10.9.2",
     "typescript": "^5.3.3"
   }
