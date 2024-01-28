@@ -58,6 +58,6 @@ app.use("/api/user", userRouter);
 app.use(notFound);
 app.use(errorHandler);
 
-app.listen(PORT, () => {
+app.listen(PORT, (): void => {
   console.log(`Server is running at port ${PORT}`);
 });

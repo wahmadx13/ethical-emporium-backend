@@ -1,0 +1,25 @@
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.OrderModel = exports.EnquiryModel = exports.CouponModel = exports.ColorModel = exports.ProductCategoryModel = exports.BrandModel = exports.BlogCategoryModel = exports.BlogModel = exports.ProductModel = exports.UserModel = void 0;
+const typegoose_1 = require("@typegoose/typegoose");
+const user_1 = require("./user");
+const product_1 = require("./product");
+const blog_1 = require("./blog");
+const blogCategory_1 = require("./blogCategory");
+const brand_1 = require("./brand");
+const productCategory_1 = require("./productCategory");
+const color_1 = require("./color");
+const coupon_1 = require("./coupon");
+const enquiry_1 = require("./enquiry");
+const order_1 = require("./order");
+exports.UserModel = (0, typegoose_1.getModelForClass)(user_1.User);
+exports.ProductModel = (0, typegoose_1.getModelForClass)(product_1.Product);
+exports.BlogModel = (0, typegoose_1.getModelForClass)(blog_1.Blog);
+exports.BlogCategoryModel = (0, typegoose_1.getModelForClass)(blogCategory_1.BlogCategory);
+exports.BrandModel = (0, typegoose_1.getModelForClass)(brand_1.Brand);
+exports.ProductCategoryModel = (0, typegoose_1.getModelForClass)(productCategory_1.ProductCategory);
+exports.ColorModel = (0, typegoose_1.getModelForClass)(color_1.Color);
+exports.CouponModel = (0, typegoose_1.getModelForClass)(coupon_1.Coupon);
+exports.EnquiryModel = (0, typegoose_1.getModelForClass)(enquiry_1.Enquiry);
+exports.OrderModel = (0, typegoose_1.getModelForClass)(order_1.Order);
+//# sourceMappingURL=index.js.map

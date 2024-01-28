@@ -4,8 +4,10 @@
   "main": "src/index.ts",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "build": "tsc --build",
-    "start": "ts-node src/index.ts",
+    "build": "rimraf dist && tsc",
+    "start": "nodemon ts-node src/index.ts",
+    "ts.check": "tsc --project tsconfig.json",
+    "add-build": "git add dist",
     "server": "nodemon --ext ts,json src/index.ts"
   },
   "keywords": [],
