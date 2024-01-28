@@ -14,7 +14,6 @@ enum StatusOptions {
 
 enum payIntent {
   card = "card",
-  cod = "cod",
 }
 
 class OrderedProducts {
@@ -40,7 +39,7 @@ export class Order {
   @prop({ type: () => [OrderedProducts] })
   orderedProducts?: OrderedProducts[];
 
-  @prop({ required: true, enum: payIntent })
+  @prop({ required: true, enum: payIntent, default: payIntent.card })
   paymentOption!: string;
 
   @prop()

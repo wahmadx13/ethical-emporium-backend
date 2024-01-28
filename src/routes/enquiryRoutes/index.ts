@@ -1,4 +1,4 @@
-import express from "express";
+import { router } from "../../utils/constants";
 import { authMiddleware } from "../../middleware/authMiddleware";
 import {
   createAnEnquiry,
@@ -8,8 +8,6 @@ import {
   updateAnEnquiry,
 } from "../../services/enquiryServices";
 import { isAdmin } from "../../middleware/isAdmin";
-
-const router = express.Router();
 
 router.post("/", createAnEnquiry);
 router.put("/:id", authMiddleware, isAdmin, updateAnEnquiry);

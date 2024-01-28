@@ -1,4 +1,4 @@
-import express from "express";
+import { router } from "../../utils/constants";
 import {
   createUser,
   verifyUser,
@@ -18,9 +18,6 @@ import {
 } from "../../services/authServices";
 import { isAdmin } from "../../middleware/isAdmin";
 import { authMiddleware } from "../../middleware/authMiddleware";
-
-//initialize router
-const router = express.Router();
 
 //user routes
 router.post("/register", createUser);
