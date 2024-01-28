@@ -1,6 +1,5 @@
 // imports
 import express from "express";
-import { Amplify } from "aws-amplify";
 import bodyParser from "body-parser";
 import cors from "cors";
 import morgan from "morgan";
@@ -30,7 +29,11 @@ dotenv.config();
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(morgan("dev"));
-app.use(cors());
+app.use(
+  cors({
+    origin: "*",
+  })
+);
 app.use(cookieParser());
 
 //AWS Amplify configuration
