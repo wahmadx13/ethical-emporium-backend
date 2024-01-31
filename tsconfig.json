@@ -2,7 +2,7 @@
   "compilerOptions": {
     "target": "es6",
     "module": "commonjs",
-    "outDir": "dist",
+    "outDir": "./build",
     "rootDir": "./src",
     "strict": true,
     "esModuleInterop": true,
@@ -16,6 +16,6 @@
     "baseUrl": ".",
     "typeRoots" : ["./src/types", "./node_modules/@types"]
   },
-  "include": ["src/**/*.ts"],
+  "include": ["src/**/*"],
   "exclude": ["node_modules"],
 }
