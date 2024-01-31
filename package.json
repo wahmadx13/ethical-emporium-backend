@@ -6,6 +6,7 @@
     "test": "echo \"Error: no test specified\" && exit 1",
     "build": "tsc",
     "start": "nodemon ts-node src/index.ts",
+    "postinstall": "tsc",
     "ts.check": "tsc --project tsconfig.json",
     "server": "nodemon --ext ts,json src/index.ts"
   },
