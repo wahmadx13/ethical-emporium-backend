@@ -30,7 +30,10 @@ const createUser = expressAsyncHandler(
 
     try {
       if (existingUser) {
-        response.json({ message: `User exists with current email: ${email}` });
+        response.json({
+          status: 500,
+          message: `User exists with current email: ${email}`,
+        });
       } else {
         await cognitoSignup({
           username: email,
@@ -40,6 +43,7 @@ const createUser = expressAsyncHandler(
           phone_number: phoneNumber,
         });
         response.json({
+          status: 200,
           message: `A six digit code is sent to: ${email}. Please verify email address`,
         });
       }
@@ -58,7 +62,7 @@ const verifyUser = expressAsyncHandler(
       confirmationCode: code,
     });
 
-    response.json({ message: "User verified" });
+    response.json({ status: 200, message: "User verified" });
   }
 );
 
@@ -83,6 +87,7 @@ const loginUser = expressAsyncHandler(
       });
 
       response.json({
+        status: 200,
         message: "Signed in successfully",
         name: findUser?.name,
         email: findUser?.email,
@@ -116,6 +121,7 @@ const loginAdmin = expressAsyncHandler(
     });
 
     response.json({
+      status: 200,
       message: "Signed in successfully",
       name: findUser?.name,
       email: findUser?.email,
@@ -146,7 +152,7 @@ const refreshUserToken = expressAsyncHandler(
           throw new Error("There is something wrong with refresh token");
         } else {
           const accessToken = generateRefreshToken(userId);
-          response.json({ accessToken });
+          response.json({ status: 200, accessToken });
         }
       } as jwt.VerifyCallback);
     }
@@ -158,7 +164,7 @@ const logoutUser = expressAsyncHandler(
   async (request: Request, response: Response): Promise<void> => {
     await cognitoSignout();
     response.clearCookie("refreshToken", { httpOnly: true, secure: true });
-    response.json({ message: "User signed out successfully" });
+    response.json({ status: 200, message: "User signed out successfully" });
   }
 );
 
@@ -166,7 +172,10 @@ const logoutUser = expressAsyncHandler(
 const logoutUserOfAllDevices = expressAsyncHandler(
   async (request: Request, response: Response): Promise<void> => {
     await cognitoGlobalSignout();
-    response.json({ message: "User signed out of all devices successfully" });
+    response.json({
+      status: 200,
+      message: "User signed out of all devices successfully",
+    });
   }
 );
 
@@ -191,6 +200,7 @@ const updateUser = expressAsyncHandler(
       response.json(updateUser);
     } else {
       response.status(404).json({
+        status: 404,
         message: "User not found",
       });
     }
@@ -201,7 +211,7 @@ const updateUser = expressAsyncHandler(
 const getAllUsers = expressAsyncHandler(
   async (request: Request, response: Response): Promise<void> => {
     const getAllUsers: DocumentType<User>[] = await UserModel.find();
-    response.json(getAllUsers);
+    response.json({ status: 200, getAllUsers });
   }
 );
 
@@ -210,7 +220,7 @@ const getAUser = expressAsyncHandler(
   async (request: Request, response: Response): Promise<void> => {
     const { id } = request.params;
     const getAUser: DocumentType<User> | null = await UserModel.findById(id);
-    response.json(getAUser);
+    response.json({ status: 200, getAUser });
   }
 );
 
@@ -221,7 +231,7 @@ const deleteAUser = expressAsyncHandler(
     validateMongoDBId(id);
     const deleteAUser = await UserModel.findByIdAndDelete(id);
     await deleteUser();
-    response.json(deleteAUser);
+    response.json({ status: 200, deleteAUser });
   }
 );
 
@@ -233,7 +243,7 @@ const updateUserPassword = expressAsyncHandler(
       oldPassword,
       newPassword,
     });
-    response.json({ message: "Password updated successfully" });
+    response.json({ status: 200, message: "Password updated successfully" });
   }
 );
 
@@ -246,7 +256,7 @@ const forgotUserPassword = expressAsyncHandler(
       throw new Error("The email is not associated with any user");
     } else {
       const code = handlePasswordReset(email);
-      response.json(code);
+      response.json({ status: 200, code });
     }
   }
 );
@@ -260,7 +270,7 @@ const resetUserPassword = expressAsyncHandler(
       confirmationCode: code,
       newPassword: password,
     });
-    response.json({ message: "Password updated successfully" });
+    response.json({ status: 200, message: "Password updated successfully" });
   }
 );
 
@@ -286,7 +296,7 @@ const unblockAUser = expressAsyncHandler(
         { isBlocked: false },
         { new: true }
       );
-    response.json({ message: "User unblocked", unblockUser });
+    response.json({ status: 200, message: "User unblocked", unblockUser });
   }
 );
 
