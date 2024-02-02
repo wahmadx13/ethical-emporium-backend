@@ -294,6 +294,7 @@ export {
   createUser,
   verifyUser,
   loginUser,
+  loginAdmin,
   refreshUserToken,
   logoutUser,
   logoutUserOfAllDevices,
