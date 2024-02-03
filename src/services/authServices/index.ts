@@ -105,13 +105,17 @@ const loginAdmin = expressAsyncHandler(
       email,
     });
     if (findUser?.role?.toLowerCase() !== "admin") {
-      throw new Error("Not Authorized");
+      response.json({
+        message: "Not Authorized. You are not an admin",
+        status: 401,
+      });
+      return;
     }
     await cognitoSigninUser({
       username: email,
       password,
     });
-    const refreshToken = generateToken(findUser.cognitoUserId);
+    const refreshToken = generateToken(findUser?.cognitoUserId);
     response.cookie("refreshToken", refreshToken, {
       httpOnly: true,
       maxAge: 72 * 60 * 60,
