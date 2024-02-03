@@ -1,6 +1,5 @@
 import { Request, Response } from "express";
 import { DocumentType } from "@typegoose/typegoose";
-import jwt, { VerifyErrors, JwtPayload } from "jsonwebtoken";
 import expressAsyncHandler from "express-async-handler";
 import { User } from "../../models/user";
 import { UserModel } from "../../models";
@@ -16,8 +15,8 @@ import {
   handleUpdatePassword,
 } from "../../aws/cognito/authServices";
 import { deleteUser, fetchAuthSession, getCurrentUser } from "aws-amplify/auth";
-import { currentAuthenticatedUser } from "../../middleware/authMiddleware";
-import { generateRefreshToken } from "../../config/refreshToken";
+// import { currentAuthenticatedUser } from "../../middleware/authMiddleware";
+// import { generateRefreshToken } from "../../config/refreshToken";
 import { generateToken } from "../../config/jwtToken";
 
 //Creating User
@@ -112,9 +111,7 @@ const loginAdmin = expressAsyncHandler(
       username: email,
       password,
     });
-    const { accessToken, idToken } = (await fetchAuthSession()).tokens ?? {};
-    // console.log("accessToken: ", accessToken, "idToken: ", idToken);
-    const refreshToken = generateToken(accessToken?.payload?.sub);
+    const refreshToken = generateToken(findUser.cognitoUserId);
     response.cookie("refreshToken", refreshToken, {
       httpOnly: true,
       maxAge: 72 * 60 * 60,
@@ -131,31 +128,19 @@ const loginAdmin = expressAsyncHandler(
   }
 );
 
-//Refresh Token
-const refreshUserToken = expressAsyncHandler(
+//Get Current Authenticated User
+const currentAuthenticatedUser = expressAsyncHandler(
   async (request: Request, response: Response) => {
-    const refreshToken = request.cookies?.refreshToken;
-    const { userId } = await currentAuthenticatedUser();
-    const user = await UserModel.findOne({ cognitoUserId: userId });
-    request.user = user?.save();
-
-    if (!refreshToken || !userId) {
-      throw new Error(
-        "No refresh token in cookies or no authenticated user exists. Please signin again"
-      );
-    } else {
-      jwt.verify(refreshToken, process.env.JWT_SECRET!, function (
-        err: VerifyErrors | null,
-        decoded: JwtPayload | undefined
-      ) {
-        if (err || userId !== decoded?.id) {
-          throw new Error("There is something wrong with refresh token");
-        } else {
-          const accessToken = generateRefreshToken(userId);
-          response.json({ status: 200, accessToken });
-        }
-      } as jwt.VerifyCallback);
-    }
+    const { username, userId, signInDetails } = await getCurrentUser();
+    const { accessToken, idToken } = (await fetchAuthSession()).tokens ?? {};
+    response.json({
+      username,
+      userId,
+      signInDetails,
+      accessToken,
+      idToken,
+      status: 200,
+    });
   }
 );
 
@@ -305,7 +290,7 @@ export {
   verifyUser,
   loginUser,
   loginAdmin,
-  refreshUserToken,
+  currentAuthenticatedUser,
   logoutUser,
   logoutUserOfAllDevices,
   updateUser,
