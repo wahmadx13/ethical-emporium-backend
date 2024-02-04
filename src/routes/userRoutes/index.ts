@@ -5,18 +5,33 @@ import {
   createOrder,
   deleteOrder,
   emptyUserCart,
+  getAUser,
   getAllOrders,
   getAllOrdersByAUser,
   getAllOrdersForUser,
+  getAllUsers,
   removeAnItemFromCart,
   updateOrderStatus,
+  updateUser,
+  deleteAUser,
+  blockAUser,
+  unblockAUser,
 } from "../../services/userServices";
 import { isAdmin } from "../../middleware/isAdmin";
+
+//User Routes
+router.put("/update-user", authMiddleware, updateUser);
+router.get("/users", authMiddleware, isAdmin, getAllUsers);
+router.get("/users/:id", getAUser);
+router.put("/block-user/:id", authMiddleware, isAdmin, blockAUser);
+router.put("/unblock-user/:id", authMiddleware, isAdmin, unblockAUser);
+router.delete("/delete/:id", authMiddleware, deleteAUser);
 
 //User Cart Routes
 router.post("/cart", authMiddleware, addToUserCart);
 router.put("/cart/remove-item", authMiddleware, removeAnItemFromCart);
 router.put("/cart/empty-cart", authMiddleware, emptyUserCart);
+
 
 //User Order Routes
 router.post("/order/create-order", authMiddleware, createOrder);

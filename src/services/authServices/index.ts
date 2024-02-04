@@ -15,9 +15,9 @@ import {
   handleUpdatePassword,
 } from "../../aws/cognito/authServices";
 import { deleteUser, fetchAuthSession, getCurrentUser } from "aws-amplify/auth";
-// import { currentAuthenticatedUser } from "../../middleware/authMiddleware";
-// import { generateRefreshToken } from "../../config/refreshToken";
 import { generateToken } from "../../config/jwtToken";
+import jwt, { JwtPayload, VerifyErrors } from "jsonwebtoken";
+import { generateRefreshToken } from "../../config/refreshToken";
 
 //Creating User
 const createUser = expressAsyncHandler(
@@ -80,6 +80,7 @@ const loginUser = expressAsyncHandler(
       const { accessToken, idToken } = (await fetchAuthSession()).tokens ?? {};
       // console.log("accessToken: ", accessToken, "idToken: ", idToken);
       const refreshToken = generateToken(accessToken?.payload?.sub);
+
       response.cookie("refreshToken", refreshToken, {
         httpOnly: true,
         maxAge: 72 * 60 * 60,
@@ -116,6 +117,7 @@ const loginAdmin = expressAsyncHandler(
       password,
     });
     const refreshToken = generateToken(findUser?.cognitoUserId);
+
     response.cookie("refreshToken", refreshToken, {
       httpOnly: true,
       maxAge: 72 * 60 * 60,
@@ -135,12 +137,9 @@ const loginAdmin = expressAsyncHandler(
 //Get Current Authenticated User
 const currentAuthenticatedUser = expressAsyncHandler(
   async (request: Request, response: Response) => {
-    const { username, userId, signInDetails } = await getCurrentUser();
     const { accessToken, idToken } = (await fetchAuthSession()).tokens ?? {};
+
     response.json({
-      username,
-      userId,
-      signInDetails,
       accessToken,
       idToken,
       status: 200,
@@ -148,12 +147,50 @@ const currentAuthenticatedUser = expressAsyncHandler(
   }
 );
 
+// Refresh Token
+const refreshUserToken = expressAsyncHandler(
+  async (request: Request, response: Response) => {
+    const refreshToken = request.cookies?.refreshToken;
+    const decoded = (await jwt.verify(
+      refreshToken,
+      process.env.JWT_SECRET!
+    )) as JwtPayload;
+    const user = await UserModel.findOne({ cognitoUserId: decoded.id });
+    request.user = user?.save();
+
+    if (!refreshToken || !user?.id) {
+      throw new Error(
+        "No refresh token in cookies or no authenticated user exists. Please signin again"
+      );
+    } else {
+      jwt.verify(refreshToken, process.env.JWT_SECRET!, function (
+        err: VerifyErrors | null,
+        decoded: JwtPayload | undefined
+      ) {
+        if (err || user.id !== decoded?.id) {
+          throw new Error("There is something wrong with refresh token");
+        } else {
+          const accessToken = generateRefreshToken(user.id);
+          response.json({ accessToken, status: 200 });
+        }
+      } as jwt.VerifyCallback);
+    }
+  }
+);
+
 //Logout User
 const logoutUser = expressAsyncHandler(
   async (request: Request, response: Response): Promise<void> => {
     await cognitoSignout();
-    response.clearCookie("refreshToken", { httpOnly: true, secure: true });
-    response.json({ status: 200, message: "User signed out successfully" });
+
+    response.clearCookie("refreshToken", {
+      httpOnly: true,
+      secure: true,
+    });
+    response.json({
+      status: 200,
+      message: "User signed out successfully",
+    });
   }
 );
 
@@ -165,62 +202,6 @@ const logoutUserOfAllDevices = expressAsyncHandler(
       status: 200,
       message: "User signed out of all devices successfully",
     });
-  }
-);
-
-//Update User
-const updateUser = expressAsyncHandler(
-  async (request: Request, response: Response): Promise<void> => {
-    const { _id } = request.user;
-    validateMongoDBId(_id as string);
-    console.log("_id", _id);
-
-    const updateUser: DocumentType<User> | null =
-      await UserModel.findByIdAndUpdate(
-        _id,
-        {
-          name: request?.body?.name,
-          address: request?.body?.address,
-        },
-        { new: true }
-      );
-
-    if (updateUser) {
-      response.json(updateUser);
-    } else {
-      response.status(404).json({
-        status: 404,
-        message: "User not found",
-      });
-    }
-  }
-);
-
-//Get All Users
-const getAllUsers = expressAsyncHandler(
-  async (request: Request, response: Response): Promise<void> => {
-    const getAllUsers: DocumentType<User>[] = await UserModel.find();
-    response.json({ status: 200, getAllUsers });
-  }
-);
-
-//Get A User
-const getAUser = expressAsyncHandler(
-  async (request: Request, response: Response): Promise<void> => {
-    const { id } = request.params;
-    const getAUser: DocumentType<User> | null = await UserModel.findById(id);
-    response.json({ status: 200, getAUser });
-  }
-);
-
-//Delete A User
-const deleteAUser = expressAsyncHandler(
-  async (request: Request, response: Response): Promise<void> => {
-    const { id } = request.params;
-    validateMongoDBId(id);
-    const deleteAUser = await UserModel.findByIdAndDelete(id);
-    await deleteUser();
-    response.json({ status: 200, deleteAUser });
   }
 );
 
@@ -263,47 +244,16 @@ const resetUserPassword = expressAsyncHandler(
   }
 );
 
-//Block User
-const blockAUser = expressAsyncHandler(
-  async (request: Request, response: Response): Promise<void> => {
-    const { id } = request.params;
-    validateMongoDBId(id);
-    const blockUser: DocumentType<User> | null =
-      await UserModel.findByIdAndUpdate(id, { isBlocked: true }, { new: true });
-    response.json({ message: "User Blocked", blockUser });
-  }
-);
-
-//Unblock A User
-const unblockAUser = expressAsyncHandler(
-  async (request: Request, response: Response): Promise<void> => {
-    const { id } = request.params;
-    validateMongoDBId(id);
-    const unblockUser: DocumentType<User> | null =
-      await UserModel.findByIdAndUpdate(
-        id,
-        { isBlocked: false },
-        { new: true }
-      );
-    response.json({ status: 200, message: "User unblocked", unblockUser });
-  }
-);
-
 export {
   createUser,
   verifyUser,
   loginUser,
   loginAdmin,
+  refreshUserToken,
   currentAuthenticatedUser,
   logoutUser,
   logoutUserOfAllDevices,
-  updateUser,
-  getAllUsers,
-  getAUser,
-  deleteAUser,
   updateUserPassword,
   forgotUserPassword,
   resetUserPassword,
-  blockAUser,
-  unblockAUser,
 };

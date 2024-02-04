@@ -2,11 +2,57 @@ import { Request, Response } from "express";
 import { v4 as uuid } from "uuid";
 import { DocumentType, Ref } from "@typegoose/typegoose";
 import expressAsyncHandler from "express-async-handler";
+import { deleteUser } from "aws-amplify/auth";
 import { validateMongoDBId } from "../../utils/helper";
 import { CartProduct, User } from "../../models/user";
 import { OrderModel, ProductModel, UserModel } from "../../models";
 import { Product } from "../../models/product";
 import { Order } from "../../models/order";
+
+//Update User
+const updateUser = expressAsyncHandler(
+  async (request: Request, response: Response): Promise<void> => {
+    const { _id } = request.user;
+    validateMongoDBId(_id as string);
+    console.log("_id", _id);
+
+    const updateUser: DocumentType<User> | null =
+      await UserModel.findByIdAndUpdate(
+        _id,
+        {
+          name: request?.body?.name,
+          address: request?.body?.address,
+        },
+        { new: true }
+      );
+
+    if (updateUser) {
+      response.json(updateUser);
+    } else {
+      response.status(404).json({
+        status: 404,
+        message: "User not found",
+      });
+    }
+  }
+);
+
+//Get All Users
+const getAllUsers = expressAsyncHandler(
+  async (request: Request, response: Response): Promise<void> => {
+    const getAllUsers: DocumentType<User>[] = await UserModel.find();
+    response.json({ status: 200, getAllUsers });
+  }
+);
+
+//Get A User
+const getAUser = expressAsyncHandler(
+  async (request: Request, response: Response): Promise<void> => {
+    const { id } = request.params;
+    const getAUser: DocumentType<User> | null = await UserModel.findById(id);
+    response.json({ status: 200, getAUser });
+  }
+);
 
 //Add To Cart
 const addToUserCart = expressAsyncHandler(
@@ -267,7 +313,47 @@ const deleteOrder = expressAsyncHandler(
   }
 );
 
+//Delete A User
+const deleteAUser = expressAsyncHandler(
+  async (request: Request, response: Response): Promise<void> => {
+    const { id } = request.params;
+    validateMongoDBId(id);
+    const deleteAUser = await UserModel.findByIdAndDelete(id);
+    await deleteUser();
+    response.json({ status: 200, deleteAUser });
+  }
+);
+
+//Block User
+const blockAUser = expressAsyncHandler(
+  async (request: Request, response: Response): Promise<void> => {
+    const { id } = request.params;
+    validateMongoDBId(id);
+    const blockUser: DocumentType<User> | null =
+      await UserModel.findByIdAndUpdate(id, { isBlocked: true }, { new: true });
+    response.json({ message: "User Blocked", blockUser });
+  }
+);
+
+//Unblock A User
+const unblockAUser = expressAsyncHandler(
+  async (request: Request, response: Response): Promise<void> => {
+    const { id } = request.params;
+    validateMongoDBId(id);
+    const unblockUser: DocumentType<User> | null =
+      await UserModel.findByIdAndUpdate(
+        id,
+        { isBlocked: false },
+        { new: true }
+      );
+    response.json({ status: 200, message: "User unblocked", unblockUser });
+  }
+);
+
 export {
+  updateUser,
+  getAllUsers,
+  getAUser,
   addToUserCart,
   removeAnItemFromCart,
   emptyUserCart,
@@ -277,4 +363,7 @@ export {
   getAllOrders,
   updateOrderStatus,
   deleteOrder,
+  deleteAUser,
+  blockAUser,
+  unblockAUser,
 };

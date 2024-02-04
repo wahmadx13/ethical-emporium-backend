@@ -41,7 +41,7 @@ database();
 const PORT = process.env.PORT || 4000;
 
 //routes
-app.use("/api/user", authRouter);
+app.use("/api/auth", authRouter);
 app.use("/api/product", productRouter);
 app.use("/api/blog", blogRouter);
 app.use("/api/blog-category", blogCategoryRouter);
