@@ -141,7 +141,19 @@ const currentAuthenticatedUser = expressAsyncHandler(
   async (request: Request, response: Response) => {
     const { accessToken, idToken } = (await fetchAuthSession()).tokens ?? {};
 
+    const findUser: DocumentType<User> | null = await UserModel.findOne({
+      cognitoUserId: accessToken?.payload.sub,
+    });
+
+    const refreshToken = generateToken(findUser?.cognitoUserId);
+
+    response.cookie("refreshToken", refreshToken, {
+      httpOnly: true,
+      maxAge: 72 * 60 * 60,
+    });
+
     response.json({
+      refreshToken,
       accessToken,
       idToken,
       status: 200,
