@@ -2,20 +2,15 @@ import { router } from "../../utils/constants";
 import {
   createUser,
   verifyUser,
-  deleteAUser,
-  getAUser,
-  getAllUsers,
   loginUser,
   logoutUser,
   updateUserPassword,
-  updateUser,
   resetUserPassword,
-  blockAUser,
-  unblockAUser,
   logoutUserOfAllDevices,
   forgotUserPassword,
-  refreshUserToken,
   loginAdmin,
+  currentAuthenticatedUser,
+  refreshUserToken,
 } from "../../services/authServices";
 import { isAdmin } from "../../middleware/isAdmin";
 import { authMiddleware } from "../../middleware/authMiddleware";
@@ -28,14 +23,9 @@ router.post("/login-admin", loginAdmin);
 router.post("/forgot-password", forgotUserPassword);
 router.get("/logout", logoutUser);
 router.get("/logout-globally", logoutUserOfAllDevices);
-router.get("/users", authMiddleware, isAdmin, getAllUsers);
-router.get("/users/:id", getAUser);
-router.get("/refresh", refreshUserToken);
-router.put("/update-user", authMiddleware, updateUser);
+router.get("/current-user", currentAuthenticatedUser);
+router.get("/refresh-token", refreshUserToken);
 router.put("/update-password", updateUserPassword);
 router.put("/reset-password", resetUserPassword);
-router.put("/block-user/:id", authMiddleware, isAdmin, blockAUser);
-router.put("/unblock-user/:id", authMiddleware, isAdmin, unblockAUser);
-router.delete("/delete/:id", authMiddleware, deleteAUser);
 
 export default router;

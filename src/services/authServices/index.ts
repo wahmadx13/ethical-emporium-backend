@@ -1,6 +1,5 @@
 import { Request, Response } from "express";
 import { DocumentType } from "@typegoose/typegoose";
-import jwt, { VerifyErrors, JwtPayload } from "jsonwebtoken";
 import expressAsyncHandler from "express-async-handler";
 import { User } from "../../models/user";
 import { UserModel } from "../../models";
@@ -16,9 +15,9 @@ import {
   handleUpdatePassword,
 } from "../../aws/cognito/authServices";
 import { deleteUser, fetchAuthSession, getCurrentUser } from "aws-amplify/auth";
-import { currentAuthenticatedUser } from "../../middleware/authMiddleware";
-import { generateRefreshToken } from "../../config/refreshToken";
 import { generateToken } from "../../config/jwtToken";
+import jwt, { JwtPayload, VerifyErrors } from "jsonwebtoken";
+import { generateRefreshToken } from "../../config/refreshToken";
 
 //Creating User
 const createUser = expressAsyncHandler(
@@ -30,7 +29,10 @@ const createUser = expressAsyncHandler(
 
     try {
       if (existingUser) {
-        response.json({ message: `User exists with current email: ${email}` });
+        response.json({
+          status: 500,
+          message: `User exists with current email: ${email}`,
+        });
       } else {
         await cognitoSignup({
           username: email,
@@ -40,6 +42,7 @@ const createUser = expressAsyncHandler(
           phone_number: phoneNumber,
         });
         response.json({
+          status: 200,
           message: `A six digit code is sent to: ${email}. Please verify email address`,
         });
       }
@@ -58,7 +61,7 @@ const verifyUser = expressAsyncHandler(
       confirmationCode: code,
     });
 
-    response.json({ message: "User verified" });
+    response.json({ status: 200, message: "User verified" });
   }
 );
 
@@ -77,12 +80,14 @@ const loginUser = expressAsyncHandler(
       const { accessToken, idToken } = (await fetchAuthSession()).tokens ?? {};
       // console.log("accessToken: ", accessToken, "idToken: ", idToken);
       const refreshToken = generateToken(accessToken?.payload?.sub);
+
       response.cookie("refreshToken", refreshToken, {
         httpOnly: true,
         maxAge: 72 * 60 * 60,
       });
 
       response.json({
+        status: 200,
         message: "Signed in successfully",
         name: findUser?.name,
         email: findUser?.email,
@@ -101,21 +106,25 @@ const loginAdmin = expressAsyncHandler(
       email,
     });
     if (findUser?.role?.toLowerCase() !== "admin") {
-      throw new Error("Not Authorized");
+      response.json({
+        message: "Not Authorized. You are not an admin",
+        status: 401,
+      });
+      return;
     }
     await cognitoSigninUser({
       username: email,
       password,
     });
-    const { accessToken, idToken } = (await fetchAuthSession()).tokens ?? {};
-    // console.log("accessToken: ", accessToken, "idToken: ", idToken);
-    const refreshToken = generateToken(accessToken?.payload?.sub);
+    const refreshToken = generateToken(findUser?.cognitoUserId);
+
     response.cookie("refreshToken", refreshToken, {
       httpOnly: true,
       maxAge: 72 * 60 * 60,
     });
 
     response.json({
+      status: 200,
       message: "Signed in successfully",
       name: findUser?.name,
       email: findUser?.email,
@@ -125,15 +134,31 @@ const loginAdmin = expressAsyncHandler(
   }
 );
 
-//Refresh Token
+//Get Current Authenticated User
+const currentAuthenticatedUser = expressAsyncHandler(
+  async (request: Request, response: Response) => {
+    const { accessToken, idToken } = (await fetchAuthSession()).tokens ?? {};
+
+    response.json({
+      accessToken,
+      idToken,
+      status: 200,
+    });
+  }
+);
+
+// Refresh Token
 const refreshUserToken = expressAsyncHandler(
   async (request: Request, response: Response) => {
     const refreshToken = request.cookies?.refreshToken;
-    const { userId } = await currentAuthenticatedUser();
-    const user = await UserModel.findOne({ cognitoUserId: userId });
+    const decoded = (await jwt.verify(
+      refreshToken,
+      process.env.JWT_SECRET!
+    )) as JwtPayload;
+    const user = await UserModel.findOne({ cognitoUserId: decoded.id });
     request.user = user?.save();
 
-    if (!refreshToken || !userId) {
+    if (!refreshToken || !user?.id) {
       throw new Error(
         "No refresh token in cookies or no authenticated user exists. Please signin again"
       );
@@ -142,11 +167,11 @@ const refreshUserToken = expressAsyncHandler(
         err: VerifyErrors | null,
         decoded: JwtPayload | undefined
       ) {
-        if (err || userId !== decoded?.id) {
+        if (err || user.id !== decoded?.id) {
           throw new Error("There is something wrong with refresh token");
         } else {
-          const accessToken = generateRefreshToken(userId);
-          response.json({ accessToken });
+          const accessToken = generateRefreshToken(user.id);
+          response.json({ accessToken, status: 200 });
         }
       } as jwt.VerifyCallback);
     }
@@ -157,8 +182,15 @@ const refreshUserToken = expressAsyncHandler(
 const logoutUser = expressAsyncHandler(
   async (request: Request, response: Response): Promise<void> => {
     await cognitoSignout();
-    response.clearCookie("refreshToken", { httpOnly: true, secure: true });
-    response.json({ message: "User signed out successfully" });
+
+    response.clearCookie("refreshToken", {
+      httpOnly: true,
+      secure: true,
+    });
+    response.json({
+      status: 200,
+      message: "User signed out successfully",
+    });
   }
 );
 
@@ -166,62 +198,10 @@ const logoutUser = expressAsyncHandler(
 const logoutUserOfAllDevices = expressAsyncHandler(
   async (request: Request, response: Response): Promise<void> => {
     await cognitoGlobalSignout();
-    response.json({ message: "User signed out of all devices successfully" });
-  }
-);
-
-//Update User
-const updateUser = expressAsyncHandler(
-  async (request: Request, response: Response): Promise<void> => {
-    const { _id } = request.user;
-    validateMongoDBId(_id as string);
-    console.log("_id", _id);
-
-    const updateUser: DocumentType<User> | null =
-      await UserModel.findByIdAndUpdate(
-        _id,
-        {
-          name: request?.body?.name,
-          address: request?.body?.address,
-        },
-        { new: true }
-      );
-
-    if (updateUser) {
-      response.json(updateUser);
-    } else {
-      response.status(404).json({
-        message: "User not found",
-      });
-    }
-  }
-);
-
-//Get All Users
-const getAllUsers = expressAsyncHandler(
-  async (request: Request, response: Response): Promise<void> => {
-    const getAllUsers: DocumentType<User>[] = await UserModel.find();
-    response.json(getAllUsers);
-  }
-);
-
-//Get A User
-const getAUser = expressAsyncHandler(
-  async (request: Request, response: Response): Promise<void> => {
-    const { id } = request.params;
-    const getAUser: DocumentType<User> | null = await UserModel.findById(id);
-    response.json(getAUser);
-  }
-);
-
-//Delete A User
-const deleteAUser = expressAsyncHandler(
-  async (request: Request, response: Response): Promise<void> => {
-    const { id } = request.params;
-    validateMongoDBId(id);
-    const deleteAUser = await UserModel.findByIdAndDelete(id);
-    await deleteUser();
-    response.json(deleteAUser);
+    response.json({
+      status: 200,
+      message: "User signed out of all devices successfully",
+    });
   }
 );
 
@@ -233,7 +213,7 @@ const updateUserPassword = expressAsyncHandler(
       oldPassword,
       newPassword,
     });
-    response.json({ message: "Password updated successfully" });
+    response.json({ status: 200, message: "Password updated successfully" });
   }
 );
 
@@ -246,7 +226,7 @@ const forgotUserPassword = expressAsyncHandler(
       throw new Error("The email is not associated with any user");
     } else {
       const code = handlePasswordReset(email);
-      response.json(code);
+      response.json({ status: 200, code });
     }
   }
 );
@@ -260,33 +240,7 @@ const resetUserPassword = expressAsyncHandler(
       confirmationCode: code,
       newPassword: password,
     });
-    response.json({ message: "Password updated successfully" });
-  }
-);
-
-//Block User
-const blockAUser = expressAsyncHandler(
-  async (request: Request, response: Response): Promise<void> => {
-    const { id } = request.params;
-    validateMongoDBId(id);
-    const blockUser: DocumentType<User> | null =
-      await UserModel.findByIdAndUpdate(id, { isBlocked: true }, { new: true });
-    response.json({ message: "User Blocked", blockUser });
-  }
-);
-
-//Unblock A User
-const unblockAUser = expressAsyncHandler(
-  async (request: Request, response: Response): Promise<void> => {
-    const { id } = request.params;
-    validateMongoDBId(id);
-    const unblockUser: DocumentType<User> | null =
-      await UserModel.findByIdAndUpdate(
-        id,
-        { isBlocked: false },
-        { new: true }
-      );
-    response.json({ message: "User unblocked", unblockUser });
+    response.json({ status: 200, message: "Password updated successfully" });
   }
 );
 
@@ -296,15 +250,10 @@ export {
   loginUser,
   loginAdmin,
   refreshUserToken,
+  currentAuthenticatedUser,
   logoutUser,
   logoutUserOfAllDevices,
-  updateUser,
-  getAllUsers,
-  getAUser,
-  deleteAUser,
   updateUserPassword,
   forgotUserPassword,
   resetUserPassword,
-  blockAUser,
-  unblockAUser,
 };

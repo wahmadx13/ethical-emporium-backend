@@ -1,20 +1,8 @@
 import { Request, Response, NextFunction } from "express";
 import { DocumentType } from "@typegoose/typegoose";
 import jwt, { JwtPayload } from "jsonwebtoken";
-import { getCurrentUser } from "aws-amplify/auth";
-import { CognitoCurrentAuthUser } from "../types/custom";
 import { User } from "../models/user";
 import { UserModel } from "../models";
-
-export const currentAuthenticatedUser =
-  async (): Promise<CognitoCurrentAuthUser> => {
-    try {
-      const { userId, signInDetails } = await getCurrentUser();
-      return { userId, signInDetails };
-    } catch (err) {
-      throw new Error(`No authenticated user exist: ${err}`);
-    }
-  };
 
 export const authMiddleware = async (
   request: Request,
