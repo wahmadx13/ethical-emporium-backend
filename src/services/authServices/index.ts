@@ -99,6 +99,8 @@ const loginUser = expressAsyncHandler(
     }
   }
 );
+
+//Login Admin 
 const loginAdmin = expressAsyncHandler(
   async (request: Request, response: Response): Promise<void> => {
     const { email, password } = request.body;

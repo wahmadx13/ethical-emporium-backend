@@ -28,7 +28,12 @@ dotenv.config();
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(morgan("dev"));
-app.use(cors());
+app.use(
+  cors({
+    origin: process.env.ETHICAL_EMPORIUM_ADMIN_URL,
+    credentials: true,
+  })
+);
 app.use(cookieParser());
 
 //AWS Amplify configuration
