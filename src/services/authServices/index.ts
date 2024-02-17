@@ -100,42 +100,6 @@ const loginUser = expressAsyncHandler(
   }
 );
 
-//Login Admin 
-const loginAdmin = expressAsyncHandler(
-  async (request: Request, response: Response): Promise<void> => {
-    const { email, password } = request.body;
-    const findUser: DocumentType<User> | null = await UserModel.findOne({
-      email,
-    });
-    if (findUser?.role?.toLowerCase() !== "admin") {
-      response.json({
-        message: "Not Authorized. You are not an admin",
-        status: 401,
-      });
-      return;
-    }
-    await cognitoSigninUser({
-      username: email,
-      password,
-    });
-    const refreshToken = generateToken(findUser?.cognitoUserId);
-
-    response.cookie("refreshToken", refreshToken, {
-      httpOnly: true,
-      maxAge: 72 * 60 * 60,
-    });
-
-    response.json({
-      status: 200,
-      message: "Signed in successfully",
-      name: findUser?.name,
-      email: findUser?.email,
-      phoneNumber: findUser?.phoneNumber,
-      refreshToken,
-    });
-  }
-);
-
 //Get Current Authenticated User
 const currentAuthenticatedUser = expressAsyncHandler(
   async (request: Request, response: Response) => {
@@ -262,7 +226,6 @@ export {
   createUser,
   verifyUser,
   loginUser,
-  loginAdmin,
   refreshUserToken,
   currentAuthenticatedUser,
   logoutUser,
