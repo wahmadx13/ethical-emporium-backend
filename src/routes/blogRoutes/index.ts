@@ -1,4 +1,4 @@
-import { router } from "../../utils/constants";
+import express from "express";
 import {
   createBlog,
   deleteABlog,
@@ -12,6 +12,8 @@ import {
 import { authMiddleware } from "../../middleware/authMiddleware";
 import { isAdmin } from "../../middleware/isAdmin";
 import { resizeBlogImage, uploadPhoto } from "../../middleware/imageMiddleware";
+
+const router = express.Router();
 
 router.post("/", authMiddleware, isAdmin, createBlog);
 router.put(

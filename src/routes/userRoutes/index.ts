@@ -1,4 +1,4 @@
-import { router } from "../../utils/constants";
+import express from "express";
 import { authMiddleware } from "../../middleware/authMiddleware";
 import {
   addToUserCart,
@@ -19,6 +19,8 @@ import {
 } from "../../services/userServices";
 import { isAdmin } from "../../middleware/isAdmin";
 
+const router = express.Router();
+
 //User Routes
 router.put("/update-user", authMiddleware, updateUser);
 router.get("/users", authMiddleware, isAdmin, getAllUsers);
@@ -31,7 +33,6 @@ router.delete("/delete/:id", authMiddleware, deleteAUser);
 router.post("/cart", authMiddleware, addToUserCart);
 router.put("/cart/remove-item", authMiddleware, removeAnItemFromCart);
 router.put("/cart/empty-cart", authMiddleware, emptyUserCart);
-
 
 //User Order Routes
 router.post("/order/create-order", authMiddleware, createOrder);

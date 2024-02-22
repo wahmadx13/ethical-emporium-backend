@@ -7,6 +7,7 @@ import { BrandModel } from "../../models";
 
 //Create A Brand
 const createBrand = async (request: Request, response: Response) => {
+  console.log("hitting");
   try {
     const findBrand: DocumentType<Brand> | null = await BrandModel.findOne(
       request.body

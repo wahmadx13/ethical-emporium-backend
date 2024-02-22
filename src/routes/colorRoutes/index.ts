@@ -1,4 +1,4 @@
-import { router } from "../../utils/constants";
+import express from "express";
 import { authMiddleware } from "../../middleware/authMiddleware";
 import { isAdmin } from "../../middleware/isAdmin";
 import {
@@ -8,6 +8,8 @@ import {
   getAllColors,
   updateColor,
 } from "../../services/colorServices";
+
+const router = express.Router();
 
 router.post("/", authMiddleware, isAdmin, createColor);
 router.put("/:id", authMiddleware, isAdmin, updateColor);

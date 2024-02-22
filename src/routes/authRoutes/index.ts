@@ -1,4 +1,4 @@
-import { router } from "../../utils/constants";
+import express from "express";
 import {
   createUser,
   verifyUser,
@@ -11,6 +11,8 @@ import {
   currentAuthenticatedUser,
   refreshUserToken,
 } from "../../services/authServices";
+
+const router = express.Router();
 
 //user routes
 router.post("/register", createUser);
