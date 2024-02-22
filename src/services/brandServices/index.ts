@@ -6,15 +6,35 @@ import { Brand } from "../../models/brand";
 import { BrandModel } from "../../models";
 
 //Create A Brand
-const createBrand = expressAsyncHandler(
-  async (request: Request, response: Response): Promise<void> => {
-    const createBrand: DocumentType<Brand> = await BrandModel.create(
+const createBrand = async (request: Request, response: Response) => {
+  try {
+    const findBrand: DocumentType<Brand> | null = await BrandModel.findOne(
       request.body
     );
+    if (findBrand) {
+      response.json({
+        statusCode: 304,
+        message: `The brand: "${request.body}" already exists!. Please try with a different name.`,
+      });
+      return;
+    } else {
+      const createBrand: DocumentType<Brand> = await BrandModel.create(
+        request.body
+      );
 
-    response.json(createBrand);
+      response.json({
+        statusCode: 200,
+        message: `Brand: "${request.body}" added successfully.`,
+        createBrand,
+      });
+    }
+  } catch (err) {
+    response.json({
+      statusCode: 500,
+      message: err,
+    });
   }
-);
+};
 
 //Update A Brand
 const updateBrand = expressAsyncHandler(
