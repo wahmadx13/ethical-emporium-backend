@@ -13,9 +13,7 @@ export const authMiddleware = async (
   if (request?.headers.authorization?.startsWith("Bearer")) {
     token = request.headers.authorization.split(" ")[1];
     if (token) {
-      console.log("token", token);
       const decoded = jwtDecode(token);
-      console.log("decoded", decoded);
       const user: DocumentType<User> | null = await UserModel.findOne({
         cognitoUserId: decoded.sub,
       });

@@ -7,7 +7,6 @@ import { BrandModel } from "../../models";
 
 //Create A Brand
 const createBrand = async (request: Request, response: Response) => {
-  console.log("hitting");
   try {
     const findBrand: DocumentType<Brand> | null = await BrandModel.findOne(
       request.body
@@ -15,7 +14,7 @@ const createBrand = async (request: Request, response: Response) => {
     if (findBrand) {
       response.json({
         statusCode: 304,
-        message: `The brand: "${request.body}" already exists!. Please try with a different name.`,
+        message: `Brand: "${request.body.title}" already exists!. Please try adding a different name`,
       });
       return;
     } else {
@@ -25,7 +24,7 @@ const createBrand = async (request: Request, response: Response) => {
 
       response.json({
         statusCode: 200,
-        message: `Brand: "${request.body}" added successfully.`,
+        message: `Brand: "${request.body.title}" added successfully.`,
         createBrand,
       });
     }
