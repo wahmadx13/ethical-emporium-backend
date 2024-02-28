@@ -68,14 +68,26 @@ const getAllBBrands = expressAsyncHandler(
 );
 
 //Delete A Brand
-const deleteABrand = expressAsyncHandler(
-  async (request: Request, response: Response): Promise<void> => {
+const deleteABrand = async (
+  request: Request,
+  response: Response
+): Promise<void> => {
+  try {
     const { id } = request.params;
     validateMongoDBId(id);
     const deleteBrand: DocumentType<Brand> | null =
       await BrandModel.findByIdAndDelete(id);
-    response.json(deleteBrand);
+    response.json({
+      statusCode: 200,
+      deleteBrand,
+      message: `Brand deletion successful`,
+    });
+  } catch (err) {
+    response.json({
+      statusCode: 500,
+      message: err,
+    });
   }
-);
+};
 
 export { createBrand, updateBrand, getABrand, getAllBBrands, deleteABrand };
