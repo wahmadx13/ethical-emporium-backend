@@ -37,17 +37,37 @@ const createBrand = async (request: Request, response: Response) => {
 };
 
 //Update A Brand
-const updateBrand = expressAsyncHandler(
-  async (request: Request, response: Response): Promise<void> => {
-    const { id } = request.params;
-    validateMongoDBId(id);
+const updateBrand = async (
+  request: Request,
+  response: Response
+): Promise<void> => {
+  const { id } = request.params;
+  validateMongoDBId(id);
+  try {
+    const findBrand: DocumentType<Brand> | null = await BrandModel.findById(id);
+    if (findBrand?.title === request.body?.title) {
+      response.json({
+        statusCode: 304,
+        message: `Brand: ${findBrand?.title} already exists. Please try adding a new one`,
+      });
+      return;
+    }
     const updateBrand: DocumentType<Brand> | null =
       await BrandModel.findByIdAndUpdate(id, request.body, {
         new: true,
       });
-    response.json(updateBrand);
+    response.json({
+      statusCode: 200,
+      message: "Brand updated successfully!",
+      updateBrand,
+    });
+  } catch (err) {
+    response.json({
+      statusCode: 500,
+      message: err,
+    });
   }
-);
+};
 
 //Get A Brand
 const getABrand = expressAsyncHandler(
