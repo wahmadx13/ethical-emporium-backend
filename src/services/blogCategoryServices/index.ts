@@ -6,27 +6,70 @@ import { BlogCategoryModel } from "../../models";
 import { validateMongoDBId } from "../../utils/helper";
 
 //Create A Blog Category
-const createBlogCategory = expressAsyncHandler(
-  async (request: Request, response: Response): Promise<void> => {
+const createBlogCategory = async (
+  request: Request,
+  response: Response
+): Promise<void> => {
+  try {
+    const findBlogCategory: DocumentType<BlogCategory> | null =
+      await BlogCategoryModel.findOne(request.body);
+    if (findBlogCategory) {
+      response.json({
+        statusCode: 304,
+        message: `Blog category: ${request.body.title} already exists. Please try adding a new one.`,
+      });
+      return;
+    }
+
     const createCategory: DocumentType<BlogCategory> =
       await BlogCategoryModel.create(request.body);
 
-    response.json(createCategory);
+    response.json({
+      statusCode: 200,
+      message: `Blog category: ${request.body.title} added successfully!`,
+      createCategory,
+    });
+  } catch (err) {
+    response.json({
+      statusCode: 500,
+      message: err,
+    });
   }
-);
+};
 
 //Update A Blog Category
-const updateBlogCategory = expressAsyncHandler(
-  async (request: Request, response: Response): Promise<void> => {
-    const { id } = request.params;
-    validateMongoDBId(id);
-    const updateCategory: DocumentType<BlogCategory> | null =
+const updateBlogCategory = async (
+  request: Request,
+  response: Response
+): Promise<void> => {
+  const { id } = request.params;
+  validateMongoDBId(id);
+  try {
+    const findBlogCategory: DocumentType<BlogCategory> | null =
+      await BlogCategoryModel.findById(id);
+    if (findBlogCategory?.title === request.body?.title) {
+      response.json({
+        statusCode: 304,
+        message: `Blog category: ${findBlogCategory?.title} already exists. Please try adding a new one`,
+      });
+      return;
+    }
+    const updateBlogCategory: DocumentType<BlogCategory> | null =
       await BlogCategoryModel.findByIdAndUpdate(id, request.body, {
         new: true,
       });
-    response.json(updateCategory);
+    response.json({
+      statusCode: 200,
+      message: "Blog category updated successfully!",
+      updateBlogCategory,
+    });
+  } catch (err) {
+    response.json({
+      statusCode: 500,
+      message: err,
+    });
   }
-);
+};
 
 //Get A Blog Category
 const getABlogCategory = expressAsyncHandler(
@@ -49,15 +92,27 @@ const getAllBlogsCategory = expressAsyncHandler(
 );
 
 //Delete A Blog Category
-const deleteABlogCategory = expressAsyncHandler(
-  async (request: Request, response: Response): Promise<void> => {
-    const { id } = request.params;
-    validateMongoDBId(id);
+const deleteABlogCategory = async (
+  request: Request,
+  response: Response
+): Promise<void> => {
+  const { id } = request.params;
+  validateMongoDBId(id);
+  try {
     const deleteBlogCategory: DocumentType<BlogCategory> | null =
       await BlogCategoryModel.findByIdAndDelete(id);
-    response.json(deleteBlogCategory);
+    response.json({
+      statusCode: 200,
+      message: `Blog category: ${deleteBlogCategory?.title} deletion successful`,
+      deleteBlogCategory,
+    });
+  } catch (err) {
+    response.json({
+      statusCode: 500,
+      message: err,
+    });
   }
-);
+};
 
 export {
   createBlogCategory,

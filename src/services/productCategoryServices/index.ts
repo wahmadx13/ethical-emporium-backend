@@ -45,7 +45,6 @@ const updateProductCategory = async (
   const { id } = request.params;
   validateMongoDBId(id);
   try {
-    console.log("updating product category");
     const findProductCategory: DocumentType<ProductCategory> | null =
       await ProductCategoryModel.findById(id);
     if (findProductCategory?.title === request.body?.title) {
