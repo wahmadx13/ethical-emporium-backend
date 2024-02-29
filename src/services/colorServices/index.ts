@@ -6,28 +6,68 @@ import { Color } from "../../models/color";
 import { ColorModel } from "../../models";
 
 //Create A Color
-const createColor = expressAsyncHandler(
-  async (request: Request, response: Response): Promise<void> => {
-    const createColor: DocumentType<Color> = await ColorModel.create(
+const createColor = async (request: Request, response: Response) => {
+  try {
+    const findColor: DocumentType<Color> | null = await ColorModel.findOne(
       request.body
     );
+    if (findColor) {
+      response.json({
+        statusCode: 304,
+        message: `Color: "${request.body.title}" already exists!. Please try adding a different name`,
+      });
+      return;
+    } else {
+      const createColor: DocumentType<Color> = await ColorModel.create(
+        request.body
+      );
 
-    response.json(createColor);
+      response.json({
+        statusCode: 200,
+        message: `Color: "${request.body.title}" added successfully.`,
+        createColor,
+      });
+    }
+  } catch (err) {
+    response.json({
+      statusCode: 500,
+      message: err,
+    });
   }
-);
+};
 
 //Update A Color
-const updateColor = expressAsyncHandler(
-  async (request: Request, response: Response): Promise<void> => {
-    const { id } = request.params;
-    validateMongoDBId(id);
+const updateColor = async (
+  request: Request,
+  response: Response
+): Promise<void> => {
+  const { id } = request.params;
+  validateMongoDBId(id);
+  try {
+    const findColor: DocumentType<Color> | null = await ColorModel.findById(id);
+    if (findColor?.title === request.body?.title) {
+      response.json({
+        statusCode: 304,
+        message: `Color: ${findColor?.title} already exists. Please try adding a new one`,
+      });
+      return;
+    }
     const updateColor: DocumentType<Color> | null =
       await ColorModel.findByIdAndUpdate(id, request.body, {
         new: true,
       });
-    response.json(updateColor);
+    response.json({
+      statusCode: 200,
+      message: "Color updated successfully!",
+      updateColor,
+    });
+  } catch (err) {
+    response.json({
+      statusCode: 500,
+      message: err,
+    });
   }
-);
+};
 
 //Get A Color
 const getAColor = expressAsyncHandler(
@@ -48,14 +88,26 @@ const getAllColors = expressAsyncHandler(
 );
 
 //Delete A Color
-const deleteAColor = expressAsyncHandler(
-  async (request: Request, response: Response): Promise<void> => {
+const deleteAColor = async (
+  request: Request,
+  response: Response
+): Promise<void> => {
+  try {
     const { id } = request.params;
     validateMongoDBId(id);
     const deleteColor: DocumentType<Color> | null =
       await ColorModel.findByIdAndDelete(id);
-    response.json(deleteColor);
+    response.json({
+      statusCode: 200,
+      deleteColor,
+      message: `Color deletion successful`,
+    });
+  } catch (err) {
+    response.json({
+      statusCode: 500,
+      message: err,
+    });
   }
-);
+};
 
 export { createColor, updateColor, getAColor, getAllColors, deleteAColor };
