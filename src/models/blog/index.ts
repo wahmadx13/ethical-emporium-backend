@@ -40,12 +40,16 @@ export class Blog {
   @prop({ ref: () => User, type: [Types.ObjectId] })
   dislikes?: Ref<User>[];
 
+  @prop({ type: [mongoose.Schema.Types.Mixed] })
+  tags?: string[];
+
   @prop({
     type: [mongoose.Schema.Types.Mixed],
     default:
       "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQD9vD8FA01ESWdXO9RC6YIcqoTNq6zu3ra8bbQd70zcA&s",
   })
   images?: { url: string; public_id: string }[];
+
   @prop({ default: "Admin" })
   author?: string;
 }
