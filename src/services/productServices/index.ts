@@ -9,17 +9,37 @@ import { ProductModel, UserModel } from "../../models";
 import { imageUpload, deleteImages } from "../../utils/cloudinary";
 
 //Create Product
-const createProduct = expressAsyncHandler(
-  async (request: Request, response: Response): Promise<void> => {
-    if (request.body.title) {
-      request.body.slug = slugify(request.body.title);
+const createProduct = async (
+  request: Request,
+  response: Response
+): Promise<void> => {
+  try {
+    const findProduct: DocumentType<Product> | null =
+      await ProductModel.findOne({
+        slug: request.body.slug,
+      });
+    if (findProduct?.slug === request.body.slug) {
+      response.json({
+        statusCode: 304,
+        message: `Product with the title "${request.body.title}" already exists. Please choose a different title`,
+      });
+      return;
     }
     const createNewProduct: DocumentType<Product> = await ProductModel.create(
       request.body
     );
-    response.json(createNewProduct);
+    response.json({
+      statusCode: 200,
+      createNewProduct,
+      message: "Product creation successful",
+    });
+  } catch (err) {
+    response.json({
+      statusCode: 500,
+      message: err,
+    });
   }
-);
+};
 
 //Update A Product
 const updateAProduct = expressAsyncHandler(
