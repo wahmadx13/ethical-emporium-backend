@@ -190,13 +190,21 @@ const rating = expressAsyncHandler(
       ?.map((item) => item.star)
       .reduce((prev, curr) => prev! + curr!, 0);
 
+    // Calculate the average rating
+    let averageRating = 0;
+    if (totalRating !== 0) {
+      averageRating = ratingSum! / totalRating;
+    }
+
+    // Scale the average rating to fit within the range of 1 to 5 stars
     const actualRating =
-      totalRating === 0 ? 0 : Math.round(ratingSum! / totalRating);
+      totalRating === 0 ? 0 : Math.round((averageRating / 5) * 5);
 
     const finalProduct = await ProductModel.findByIdAndUpdate(
       productId,
       {
         totalRating: actualRating,
+        $inc: { numberOfUsersRated: 1 },
       },
       { new: true }
     );

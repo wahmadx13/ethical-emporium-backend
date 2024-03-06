@@ -55,6 +55,9 @@ export class Product {
   ratings?: Rating[];
 
   @prop({ default: 0 })
+  numberOfUsersRated?: number;
+
+  @prop({ default: 0 })
   totalRating?: number;
 
   @prop({ timestamps: true })
