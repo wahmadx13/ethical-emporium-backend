@@ -233,6 +233,7 @@ const uploadProductImages = expressAsyncHandler(
       response.json({
         images,
         updateProduct,
+        statusCode: 200,
       });
     }
   }
