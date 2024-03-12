@@ -116,14 +116,28 @@ const getAProduct = expressAsyncHandler(
 );
 
 //Delete A Product
-const deleteAProduct = expressAsyncHandler(
-  async (request: Request, response: Response): Promise<void> => {
-    const { id } = request.params;
+const deleteAProduct = async (
+  request: Request,
+  response: Response
+): Promise<void> => {
+  const { id } = request.params;
+  const { imageIds } = request.body;
+  try {
     const deleteProduct: DocumentType<Product> | null =
       await ProductModel.findByIdAndDelete(id);
-    response.json(deleteProduct);
+    await imageIds.map(async (id: string) => await deleteImages(id));
+    response.json({
+      statusCode: 200,
+      message: "Product deleted successfully",
+      deleteProduct,
+    });
+  } catch (err) {
+    response.json({
+      statusCode: 500,
+      message: err,
+    });
   }
-);
+};
 
 //Add To Wishlist
 const addToWishlist = expressAsyncHandler(
@@ -196,14 +210,10 @@ const rating = expressAsyncHandler(
       averageRating = ratingSum! / totalRating;
     }
 
-    // Scale the average rating to fit within the range of 1 to 5 stars
-    const actualRating =
-      totalRating === 0 ? 0 : Math.round((averageRating / 5) * 5);
-
     const finalProduct = await ProductModel.findByIdAndUpdate(
       productId,
       {
-        totalRating: actualRating,
+        totalRating: averageRating,
         $inc: { numberOfUsersRated: 1 },
       },
       { new: true }
