@@ -28,17 +28,17 @@ router.put(
   resizeProductImage,
   uploadProductImages
 );
+router.put(
+  "/delete-product-images/:id",
+  authMiddleware,
+  isAdmin,
+  deleteProductImages
+);
 router.put("/wishlist", authMiddleware, addToWishlist);
 router.put("/rating", authMiddleware, rating);
 router.get("/", getAllProducts);
 router.put("/:id", authMiddleware, isAdmin, updateAProduct);
 router.get("/:id", getAProduct);
 router.delete("/:id", authMiddleware, isAdmin, deleteAProduct);
-router.delete(
-  "/delete-product-images/:id",
-  authMiddleware,
-  isAdmin,
-  deleteProductImages
-);
 
 export default router;

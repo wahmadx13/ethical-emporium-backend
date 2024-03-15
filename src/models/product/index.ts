@@ -42,7 +42,7 @@ export class Product {
   @prop({ type: [mongoose.Schema.Types.Mixed] })
   images?: { url: string; public_id: string }[];
 
-  @prop({ default: 0, select: false })
+  @prop({ default: 0 })
   sold?: number;
 
   @prop({ type: [mongoose.Schema.Types.Mixed] })

@@ -42,19 +42,28 @@ const createProduct = async (
 };
 
 //Update A Product
-const updateAProduct = expressAsyncHandler(
-  async (request: Request, response: Response): Promise<void> => {
-    const { id } = request.params;
-    if (request.body.title) {
-      slugify(request.body.title);
-    }
+const updateAProduct = async (
+  request: Request,
+  response: Response
+): Promise<void> => {
+  const { id } = request.params;
+  try {
     const updateProduct: DocumentType<Product> | null =
       await ProductModel.findByIdAndUpdate({ _id: id }, request.body, {
         new: true,
       });
-    response.json(updateProduct);
+    response.json({
+      statusCode: 200,
+      message: "Product updated successfully!",
+      updateProduct,
+    });
+  } catch (err) {
+    response.json({
+      statusCode: 500,
+      message: `Encountered error while updating the product: ${err}`,
+    });
   }
-);
+};
 
 //Get All Products
 const getAllProducts = expressAsyncHandler(
@@ -257,13 +266,35 @@ const uploadProductImages = expressAsyncHandler(
   }
 );
 
-const deleteProductImages = expressAsyncHandler(
-  async (request: Request, response: Response) => {
-    const { id } = request.params;
-    const deleteProdImages = deleteImages(id);
-    response.json({ message: "deleted", deleteImages });
+const deleteProductImages = async (request: Request, response: Response) => {
+  const { id } = request.params;
+  const { imageId } = request.body;
+  try {
+    const findProduct: DocumentType<Product> | null =
+      await ProductModel.findByIdAndUpdate(id);
+    const updateImages = findProduct?.images?.filter(
+      (image) => image.public_id !== imageId
+    );
+    console.log("images", updateImages);
+    const updateProduct: DocumentType<Product> | null =
+      await ProductModel.findByIdAndUpdate(
+        id,
+        { images: updateImages },
+        { new: true }
+      );
+    await deleteImages(imageId);
+    response.json({
+      statusCode: 200,
+      message: "Images deletion successful!",
+      updateProduct,
+    });
+  } catch (err) {
+    response.json({
+      statusCode: 500,
+      message: `Error in deleting product images: ${err}`,
+    });
   }
-);
+};
 
 export {
   createProduct,
