@@ -60,6 +60,15 @@ export class Product {
   @prop({ default: 0 })
   totalRating?: number;
 
+  @prop({ default: false })
+  featured?: boolean;
+
+  @prop({ default: false })
+  trending?: boolean;
+
+  @prop({ default: false })
+  newArrival?: boolean;
+
   @prop({ timestamps: true })
   createdAt?: Date;
 
