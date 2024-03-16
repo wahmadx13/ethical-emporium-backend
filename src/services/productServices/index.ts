@@ -1,12 +1,12 @@
 import { Request, Response } from "express";
 import { DocumentType } from "@typegoose/typegoose";
-import slugify from "slugify";
 import expressAsyncHandler from "express-async-handler";
 const fs = require("fs");
 import { Product } from "../../models/product";
 import { User } from "../../models/user";
 import { ProductModel, UserModel } from "../../models";
 import { imageUpload, deleteImages } from "../../utils/cloudinary";
+import { validateMongoDBId } from "../../utils/helper";
 
 //Create Product
 const createProduct = async (
@@ -47,9 +47,10 @@ const updateAProduct = async (
   response: Response
 ): Promise<void> => {
   const { id } = request.params;
+  validateMongoDBId(id);
   try {
     const updateProduct: DocumentType<Product> | null =
-      await ProductModel.findByIdAndUpdate({ _id: id }, request.body, {
+      await ProductModel.findByIdAndUpdate(id, request.body, {
         new: true,
       });
     response.json({
@@ -275,7 +276,6 @@ const deleteProductImages = async (request: Request, response: Response) => {
     const updateImages = findProduct?.images?.filter(
       (image) => image.public_id !== imageId
     );
-    console.log("images", updateImages);
     const updateProduct: DocumentType<Product> | null =
       await ProductModel.findByIdAndUpdate(
         id,

@@ -2,6 +2,7 @@ import express from "express";
 import {
   createBlog,
   deleteABlog,
+  deleteBlogImages,
   dislikeABlog,
   getABlog,
   getAllBlogs,
@@ -23,6 +24,12 @@ router.put(
   uploadPhoto.array("images", 2),
   resizeBlogImage,
   uploadBlogImages
+);
+router.put(
+  "/delete-blog-images/:id",
+  authMiddleware,
+  isAdmin,
+  deleteBlogImages
 );
 router.put("/like-blog", authMiddleware, likeABlog);
 router.put("/dislike-blog", authMiddleware, dislikeABlog);

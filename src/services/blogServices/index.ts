@@ -1,37 +1,64 @@
 import { Request, Response } from "express";
 import { DocumentType } from "@typegoose/typegoose";
 import expressAsyncHandler from "express-async-handler";
-import slugify from "slugify";
 import { Blog } from "../../models/blog";
 import { BlogModel } from "../../models";
 import { validateMongoDBId } from "../../utils/helper";
-import { imageUpload } from "../../utils/cloudinary";
+import { deleteImages, imageUpload } from "../../utils/cloudinary";
 const fs = require("fs");
 
 //Create A Blog
-const createBlog = expressAsyncHandler(
-  async (request: Request, response: Response): Promise<void> => {
-    if (request.body.title) {
-      request.body.slug = slugify(request.body.title);
+const createBlog = async (
+  request: Request,
+  response: Response
+): Promise<void> => {
+  try {
+    const findBlog: DocumentType<Blog> | null = await BlogModel.findOne({
+      slug: request.body.slug,
+    });
+    if (findBlog?.slug === request.body.slug) {
+      response.json({
+        statusCode: 304,
+        message: `Blog with the title "${request.body.title}" already exists. Please choose a different title`,
+      });
+      return;
     }
     const newBlog: DocumentType<Blog> = await BlogModel.create(request.body);
-    response.json(newBlog);
+    response.json({
+      statusCode: 200,
+      newBlog,
+      message: "Blog creation successful!",
+    });
+  } catch (err) {
+    response.json({
+      statusCode: 500,
+      message: err,
+    });
   }
-);
+};
 
 //Upload A Blog
-const updateABlog = expressAsyncHandler(
-  async (request: Request, response: Response): Promise<void> => {
-    const { id } = request.params;
-    validateMongoDBId(id);
-    if (request.body.title) {
-      request.body.slug = slugify(request.body.title);
-    }
+const updateABlog = async (
+  request: Request,
+  response: Response
+): Promise<void> => {
+  const { id } = request.params;
+  validateMongoDBId(id);
+  try {
     const updateBlog: DocumentType<Blog> | null =
       await BlogModel.findByIdAndUpdate(id, request.body, { new: true });
-    response.json(updateBlog);
+    response.json({
+      statusCode: 200,
+      message: "Blog updated successfully!",
+      updateBlog,
+    });
+  } catch (err) {
+    response.json({
+      statusCode: 500,
+      message: `Encountered error while updating the blog: ${err}`,
+    });
   }
-);
+};
 
 //Get A Blog
 const getABlog = expressAsyncHandler(
@@ -59,15 +86,30 @@ const getAllBlogs = expressAsyncHandler(
 );
 
 //Delete A Blog
-const deleteABlog = expressAsyncHandler(
-  async (request: Request, response: Response): Promise<void> => {
-    const { id } = request.params;
-    validateMongoDBId(id);
+const deleteABlog = async (
+  request: Request,
+  response: Response
+): Promise<void> => {
+  const { id } = request.params;
+  const { imageIds } = request.body;
+  validateMongoDBId(id);
+  try {
     const deleteBlog: DocumentType<Blog> | null =
       await BlogModel.findByIdAndDelete(id);
+    await imageIds.map(async (id: string) => await deleteImages(id));
     response.json(deleteBlog);
+    response.json({
+      statusCode: 200,
+      message: "Blog deleted successfully",
+      deleteBlog,
+    });
+  } catch (err) {
+    response.json({
+      statusCode: 500,
+      message: err,
+    });
   }
-);
+};
 
 //Like A Blog
 const likeABlog = expressAsyncHandler(
@@ -202,10 +244,40 @@ const uploadBlogImages = expressAsyncHandler(
       response.json({
         images,
         updateBlog,
+        statusCode: 200,
       });
     }
   }
 );
+
+const deleteBlogImages = async (request: Request, response: Response) => {
+  const { id } = request.params;
+  const { imageId } = request.body;
+  try {
+    const findBlog: DocumentType<Blog> | null =
+      await BlogModel.findByIdAndUpdate(id);
+    const updateImages = findBlog?.images?.filter(
+      (image) => image.public_id !== imageId
+    );
+    const updateBlog: DocumentType<Blog> | null =
+      await BlogModel.findByIdAndUpdate(
+        id,
+        { images: updateImages },
+        { new: true }
+      );
+    await deleteImages(imageId);
+    response.json({
+      statusCode: 200,
+      message: "Images deletion successful!",
+      updateBlog,
+    });
+  } catch (err) {
+    response.json({
+      statusCode: 500,
+      message: `Error in deleting blog images: ${err}`,
+    });
+  }
+};
 
 export {
   createBlog,
@@ -216,4 +288,5 @@ export {
   likeABlog,
   dislikeABlog,
   uploadBlogImages,
+  deleteBlogImages,
 };
