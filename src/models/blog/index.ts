@@ -23,7 +23,7 @@ export class Blog {
   description!: string;
 
   @prop({ required: true })
-  category!: string[];
+  category!: string;
 
   @prop({ default: 0 })
   numberOfViews?: number;
