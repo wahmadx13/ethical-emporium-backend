@@ -3,26 +3,52 @@ import { DocumentType } from "@typegoose/typegoose";
 import expressAsyncHandler from "express-async-handler";
 import { Enquiry } from "../../models/enquiry";
 import { EnquiryModel } from "../../models";
+import { validateMongoDBId } from "../../utils/helper";
 
 //Create An Enquiry
-const createAnEnquiry = expressAsyncHandler(
-  async (request: Request, response: Response): Promise<void> => {
+const createAnEnquiry = async (
+  request: Request,
+  response: Response
+): Promise<void> => {
+  try {
     const createEnquiry: DocumentType<Enquiry> = await EnquiryModel.create(
       request.body
     );
-    response.json(createEnquiry);
+    response.json({
+      statusCode: 200,
+      message: "Enquiry created successfully!",
+      createEnquiry,
+    });
+  } catch (err) {
+    response.json({
+      statusCode: 500,
+      message: `The following error occurred during creating enquiry`,
+    });
   }
-);
+};
 
 //Update An Enquiry
-const updateAnEnquiry = expressAsyncHandler(
-  async (request: Request, response: Response): Promise<void> => {
-    const { id } = request.params;
+const updateAnEnquiry = async (
+  request: Request,
+  response: Response
+): Promise<void> => {
+  const { id } = request.params;
+  validateMongoDBId(id);
+  try {
     const updateEnquiry: DocumentType<Enquiry> | null =
       await EnquiryModel.findByIdAndUpdate(id, request.body, { new: true });
-    response.json(updateEnquiry);
+    response.json({
+      statusCode: 200,
+      message: `Enquiry status updated successfully`,
+      updateEnquiry,
+    });
+  } catch (err) {
+    response.json({
+      statusCode: 500,
+      message: `The following error occurred while updating the enquiry: ${err}`,
+    });
   }
-);
+};
 
 //Get an Enquiry
 const getAnEnquiry = expressAsyncHandler(
@@ -43,14 +69,27 @@ const getAllEnquiries = expressAsyncHandler(
 );
 
 //Delete An Enquiry
-const deleteAnEnquiry = expressAsyncHandler(
-  async (request: Request, response: Response): Promise<void> => {
-    const { id } = request.params;
+const deleteAnEnquiry = async (
+  request: Request,
+  response: Response
+): Promise<void> => {
+  const { id } = request.params;
+  validateMongoDBId(id);
+  try {
     const deleteEnquiry: DocumentType<Enquiry> | null =
       await EnquiryModel.findByIdAndDelete(id);
-    response.json(deleteEnquiry);
+    response.json({
+      statusCode: 200,
+      message: "Enquiry deleted successfully!",
+      deleteEnquiry,
+    });
+  } catch (err) {
+    response.json({
+      statusCode: 500,
+      message: `The following error occurred while deleting the enquiry: ${err}`,
+    });
   }
-);
+};
 
 export {
   createAnEnquiry,

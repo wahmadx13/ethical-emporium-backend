@@ -135,7 +135,7 @@ const deleteAProduct = async (
   try {
     const deleteProduct: DocumentType<Product> | null =
       await ProductModel.findByIdAndDelete(id);
-    if (imageIds) {
+    if (imageIds.length) {
       await imageIds.map(async (id: string) => await deleteImages(id));
     }
     response.json({

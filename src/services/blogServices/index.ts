@@ -96,7 +96,7 @@ const deleteABlog = async (
   try {
     const deleteBlog: DocumentType<Blog> | null =
       await BlogModel.findByIdAndDelete(id);
-    if (imageIds) {
+    if (imageIds.length) {
       await imageIds.map(async (id: string) => await deleteImages(id));
     }
     response.json(deleteBlog);

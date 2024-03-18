@@ -14,8 +14,7 @@ import {
   updateOrderStatus,
   updateUser,
   deleteAUser,
-  blockAUser,
-  unblockAUser,
+  restrictUser,
 } from "../../services/userServices";
 import { isAdmin } from "../../middleware/isAdmin";
 
@@ -25,8 +24,7 @@ const router = express.Router();
 router.put("/update-user", authMiddleware, updateUser);
 router.get("/users", authMiddleware, isAdmin, getAllUsers);
 router.get("/users/:id", getAUser);
-router.put("/block-user/:id", authMiddleware, isAdmin, blockAUser);
-router.put("/unblock-user/:id", authMiddleware, isAdmin, unblockAUser);
+router.put("/restrict-user/:id", authMiddleware, isAdmin, restrictUser);
 router.delete("/delete/:id", authMiddleware, deleteAUser);
 
 //User Cart Routes

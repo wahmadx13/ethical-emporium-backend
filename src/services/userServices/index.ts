@@ -40,8 +40,8 @@ const updateUser = expressAsyncHandler(
 //Get All Users
 const getAllUsers = expressAsyncHandler(
   async (request: Request, response: Response): Promise<void> => {
-    const getAllUsers: DocumentType<User>[] = await UserModel.find();
-    response.json({ status: 200, getAllUsers });
+    const getUsers: DocumentType<User>[] = await UserModel.find();
+    response.json(getUsers);
   }
 );
 
@@ -197,7 +197,7 @@ const createOrder = expressAsyncHandler(
         currency: "usd",
       },
       paymentOption,
-      orderBy: user?._id,
+      orderBy: user?.name,
       orderStatus: "Processing",
     }).save();
 
@@ -324,29 +324,14 @@ const deleteAUser = expressAsyncHandler(
   }
 );
 
-//Block User
-const blockAUser = expressAsyncHandler(
+//Restrict User Access
+const restrictUser = expressAsyncHandler(
   async (request: Request, response: Response): Promise<void> => {
     const { id } = request.params;
     validateMongoDBId(id);
     const blockUser: DocumentType<User> | null =
-      await UserModel.findByIdAndUpdate(id, { isBlocked: true }, { new: true });
+      await UserModel.findByIdAndUpdate(id, request.body, { new: true });
     response.json({ message: "User Blocked", blockUser });
-  }
-);
-
-//Unblock A User
-const unblockAUser = expressAsyncHandler(
-  async (request: Request, response: Response): Promise<void> => {
-    const { id } = request.params;
-    validateMongoDBId(id);
-    const unblockUser: DocumentType<User> | null =
-      await UserModel.findByIdAndUpdate(
-        id,
-        { isBlocked: false },
-        { new: true }
-      );
-    response.json({ status: 200, message: "User unblocked", unblockUser });
   }
 );
 
@@ -364,6 +349,5 @@ export {
   updateOrderStatus,
   deleteOrder,
   deleteAUser,
-  blockAUser,
-  unblockAUser,
+  restrictUser,
 };
