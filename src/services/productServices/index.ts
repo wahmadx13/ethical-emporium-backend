@@ -47,7 +47,6 @@ const updateAProduct = async (
   response: Response
 ): Promise<void> => {
   const { id } = request.params;
-  validateMongoDBId(id);
   try {
     const updateProduct: DocumentType<Product> | null =
       await ProductModel.findByIdAndUpdate(id, request.body, {

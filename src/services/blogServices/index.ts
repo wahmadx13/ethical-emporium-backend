@@ -43,7 +43,6 @@ const updateABlog = async (
   response: Response
 ): Promise<void> => {
   const { id } = request.params;
-  validateMongoDBId(id);
   try {
     const updateBlog: DocumentType<Blog> | null =
       await BlogModel.findByIdAndUpdate(id, request.body, { new: true });
